@@ -29,24 +29,32 @@ Route::middleware(['auth'])->group(function () {
 // admin pages
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/dashboard', AdminDashboardController::class)->name('admin.dashboard');
+
     Route::get('/data-management', [DataManagementController::class, 'index'])->name('admin.data-management');
     Route::post('/data-management', [DataManagementController::class, 'store'])->name('admin.data-management.store');
     Route::delete('/data-management/{dataset}', [DataManagementController::class, 'destroy'])->name('admin.data-management.destroy');
+
     Route::get('/data-preprocessing', [PreprocessingController::class, 'index'])->name('admin.data-preprocessing');
     Route::get('/preprocessing', [PreprocessingController::class, 'index'])->name('admin.preprocessing');
     Route::post('/data-preprocessing/run', [PreprocessingController::class, 'run'])->name('admin.data-preprocessing.run');
+
     Route::get('/analytics', [AnalyticsController::class, 'index'])->name('admin.analytics');
+
     Route::get('/forecasting', [ForecastingController::class, 'index'])->name('admin.forecasting');
     Route::post('/forecasting/train', [ForecastingController::class, 'train'])->name('admin.forecasting.train');
     Route::post('/forecasting/predict', [ForecastingController::class, 'predict'])->name('admin.forecasting.predict');
+
     Route::get('/decision-support', [DecisionSupportController::class, 'index'])->name('admin.decision-support');
     Route::post('/decision-support/generate', [DecisionSupportController::class, 'generate'])->name('admin.decision-support.generate');
+
     Route::get('/reports', [ReportController::class, 'index'])->name('admin.reports');
     Route::post('/reports', [ReportController::class, 'store'])->name('admin.reports.store');
     Route::get('/reports/{report}/download', [ReportController::class, 'download'])->name('admin.reports.download');
+
     Route::get('/users', [UserManagementController::class, 'index'])->name('admin.users');
     Route::post('/users', [UserManagementController::class, 'store'])->name('admin.users.store');
     Route::put('/users/{user}', [UserManagementController::class, 'update'])->name('admin.users.update');
+
     Route::delete('/users/{user}', [UserManagementController::class, 'destroy'])->name('admin.users.destroy');
 });
 

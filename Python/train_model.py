@@ -3,6 +3,7 @@ import json
 import math
 import pickle
 import sys
+from pathlib import Path
 
 FEATURES = [
     "year",
@@ -20,6 +21,17 @@ FEATURES = [
 ]
 
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+
+
+def default_path(filename):
+    return SCRIPT_DIR / filename
+
+
+def log(message):
+    print(message, flush=True)
+
+
 def read_rows(dataset_path):
     with open(dataset_path, newline="", encoding="utf-8") as file:
         reader = csv.DictReader(file)
@@ -30,7 +42,22 @@ def read_rows(dataset_path):
                 parsed[key] = float(value or 0)
             rows.append(parsed)
 
-    return sorted(rows, key=lambda item: (item["year"], item["month"]))
+    return add_derived_features(sorted(rows, key=lambda item: (item["year"], item["month"])))
+
+
+def add_derived_features(rows):
+    for index, row in enumerate(rows):
+        month = int(row["month"])
+        previous_row = rows[index - 1] if index > 0 else row
+        second_previous_row = rows[index - 2] if index > 1 else row
+
+        row.setdefault("lag_1", previous_row["consumption_kwh"])
+        row.setdefault("lag_2", second_previous_row["consumption_kwh"])
+        row.setdefault("trend", float(index + 1))
+        row.setdefault("month_sin", math.sin(2 * math.pi * month / 12))
+        row.setdefault("month_cos", math.cos(2 * math.pi * month / 12))
+
+    return rows
 
 
 def split_train_test(rows):
@@ -147,25 +174,65 @@ def evaluate(model, rows):
     }
 
 
-def main():
-    dataset_path = sys.argv[1] if len(sys.argv) > 1 else "qc_final_merged_dataset.csv"
-    model_path = sys.argv[2] if len(sys.argv) > 2 else "qc_energy_model_final.pkl"
-    metrics_path = sys.argv[3] if len(sys.argv) > 3 else "metrics.json"
+def period_label(row):
+    return f"{int(row['year'])}-{int(row['month']):02d}"
 
+
+def main():
+    dataset_path = Path(sys.argv[1]) if len(sys.argv) > 1 else default_path("qc_final_merged_dataset.csv")
+    model_path = Path(sys.argv[2]) if len(sys.argv) > 2 else default_path("qc_energy_model_final.pkl")
+    metrics_path = Path(sys.argv[3]) if len(sys.argv) > 3 else default_path("metrics.json")
+
+    log("Starting model training...")
+    log(f"Dataset: {dataset_path}")
+    log(f"Model output: {model_path}")
+    log(f"Metrics output: {metrics_path}")
+    log("")
+
+    log("Step 1/6: Loading dataset")
     rows = read_rows(dataset_path)
     if len(rows) < 6:
         raise ValueError("At least 6 processed rows are required to train the model.")
 
-    train_rows, test_rows = split_train_test(rows)
-    model = train_model(train_rows)
-    metrics = evaluate(model, test_rows)
+    log(f"Loaded {len(rows)} rows from {period_label(rows[0])} to {period_label(rows[-1])}.")
+    log("")
 
+    log("Step 2/6: Preparing training features")
+    log(f"Using {len(FEATURES)} features: {', '.join(FEATURES)}")
+    log("Derived lag, trend, and seasonal month features are ready.")
+    log("")
+
+    log("Step 3/6: Splitting dataset")
+    train_rows, test_rows = split_train_test(rows)
+    log(f"Training rows: {len(train_rows)} ({period_label(train_rows[0])} to {period_label(train_rows[-1])})")
+    log(f"Testing rows: {len(test_rows)} ({period_label(test_rows[0])} to {period_label(test_rows[-1])})")
+    log("")
+
+    log("Step 4/6: Training Linear Regression model")
+    model = train_model(train_rows)
+    log("Standardized feature values, built the regression matrix, and solved the coefficients.")
+    log(f"Learned {len(model['coefficients'])} coefficients including the intercept.")
+    log("")
+
+    log("Step 5/6: Evaluating model on test data")
+    metrics = evaluate(model, test_rows)
+    log(f"MAE: {metrics['mae']}")
+    log(f"RMSE: {metrics['rmse']}")
+    log(f"R2 score: {metrics['r2_score']}")
+    log("")
+
+    log("Step 6/6: Saving model and metrics")
     with open(model_path, "wb") as model_file:
         pickle.dump(model, model_file)
 
     with open(metrics_path, "w", encoding="utf-8") as metrics_file:
         json.dump(metrics, metrics_file)
 
+    log(f"Saved model to {model_path}")
+    log(f"Saved metrics to {metrics_path}")
+    log("")
+    log("Training complete.")
+    log("Final metrics JSON:")
     print(json.dumps(metrics))
 
 

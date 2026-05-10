@@ -1,53 +1,373 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { router, useForm, usePage } from '@inertiajs/react';
 import type { Dataset } from '@/types';
+import { router, useForm, usePage } from '@inertiajs/react';
+import { Search, Trash2, Upload } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
-export default function DataManagement({ datasets = [], requiredColumns }: { datasets: Dataset[]; requiredColumns: Record<string, string[]> }) {
+export default function DataManagement({
+    datasets = [],
+    requiredColumns,
+}: {
+    datasets: Dataset[];
+    requiredColumns: Record<string, string[]>;
+}) {
     const { flash } = usePage().props as any;
-    const { data, setData, post, processing } = useForm<{ type: string; dataset: File | null; replace_existing: boolean }>({
+
+    const [openUploadModal, setOpenUploadModal] = useState(false);
+    const [openDeleteModal, setOpenDeleteModal] = useState(false);
+    const [selectedDataset, setSelectedDataset] = useState<Dataset | null>(null);
+    const [deletePassword, setDeletePassword] = useState('');
+
+    const [search, setSearch] = useState('');
+    const [typeFilter, setTypeFilter] = useState('all');
+    const [currentPage, setCurrentPage] = useState(1);
+
+    const itemsPerPage = 5;
+
+    const { data, setData, post, processing, reset } = useForm<{
+        type: string;
+        dataset: File | null;
+        replace_existing: boolean;
+    }>({
         type: 'electricity',
         dataset: null,
         replace_existing: false,
     });
 
+    const filteredDatasets = useMemo(() => {
+        return datasets.filter((item) => {
+            const fileName = item.original_name?.toLowerCase() ?? '';
+            const type = item.type?.toLowerCase() ?? '';
+            const status = item.status?.toLowerCase() ?? '';
+
+            const matchesSearch =
+                fileName.includes(search.toLowerCase()) ||
+                type.includes(search.toLowerCase()) ||
+                status.includes(search.toLowerCase());
+
+            const matchesType = typeFilter === 'all' || item.type === typeFilter;
+
+            return matchesSearch && matchesType;
+        });
+    }, [datasets, search, typeFilter]);
+
+    const totalPages = Math.ceil(filteredDatasets.length / itemsPerPage);
+
+    const paginatedDatasets = filteredDatasets.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage,
+    );
+
+    const submitUpload = (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+
+        post('/admin/data-management', {
+            forceFormData: true,
+            onSuccess: () => {
+                reset();
+                setOpenUploadModal(false);
+            },
+        });
+    };
+
+    const openDeleteConfirmation = (dataset: Dataset) => {
+        setSelectedDataset(dataset);
+        setDeletePassword('');
+        setOpenDeleteModal(true);
+    };
+
+    const confirmDelete = () => {
+        if (!selectedDataset) return;
+
+        router.delete(`/admin/data-management/${selectedDataset.id}`, {
+            data: {
+                password: deletePassword,
+            },
+            onSuccess: () => {
+                setOpenDeleteModal(false);
+                setSelectedDataset(null);
+                setDeletePassword('');
+            },
+        });
+    };
+
     return (
         <div className="space-y-6 p-6">
-            <div><h1 className="text-2xl font-semibold">Data Management</h1><p className="text-sm text-muted-foreground">Upload, validate, replace, and review electricity and climate datasets.</p></div>
-            {flash?.success && <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-700">{flash.success}</div>}
-            {flash?.error && <div className="rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">{flash.error}</div>}
+            <div className="flex items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-semibold">Data Management</h1>
+                    <p className="text-sm text-muted-foreground">
+                        Upload, validate, replace, and review electricity and climate datasets.
+                    </p>
+                </div>
+
+                <Button onClick={() => setOpenUploadModal(true)}>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Upload Dataset
+                </Button>
+            </div>
+
+            {flash?.success && (
+                <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-700">
+                    {flash.success}
+                </div>
+            )}
+
+            {flash?.error && (
+                <div className="rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
+                    {flash.error}
+                </div>
+            )}
 
             <Card className="rounded-lg">
-                <CardHeader><CardTitle>Upload Dataset</CardTitle></CardHeader>
-                <CardContent>
-                    <form className="grid gap-4 md:grid-cols-4" onSubmit={(event) => { event.preventDefault(); post('/admin/data-management'); }}>
-                        <select className="rounded-md border bg-background px-3 py-2 text-sm" value={data.type} onChange={(event) => setData('type', event.target.value)}>
-                            <option value="electricity">Electricity Consumption</option>
-                            <option value="climate">Climate</option>
-                        </select>
-                        <Input type="file" accept=".csv,text/csv" onChange={(event) => setData('dataset', event.target.files?.[0] ?? null)} />
-                        <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={data.replace_existing} onChange={(event) => setData('replace_existing', event.target.checked)} /> Replace existing records</label>
-                        <Button disabled={processing}>Upload CSV</Button>
-                    </form>
-                    <p className="mt-3 text-xs text-muted-foreground">Required columns: {requiredColumns[data.type]?.join(', ')}</p>
-                </CardContent>
-            </Card>
+                <CardHeader>
+                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                        <CardTitle>Uploaded Datasets Table</CardTitle>
 
-            <Card className="rounded-lg">
-                <CardHeader><CardTitle>Uploaded Datasets</CardTitle></CardHeader>
+                        <div className="flex flex-col gap-2 md:flex-row">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    className="w-full pl-9 md:w-64"
+                                    placeholder="Search datasets..."
+                                    value={search}
+                                    onChange={(event) => {
+                                        setSearch(event.target.value);
+                                        setCurrentPage(1);
+                                    }}
+                                />
+                            </div>
+
+                            <select
+                                className="rounded-md border bg-background px-3 py-2 text-sm"
+                                value={typeFilter}
+                                onChange={(event) => {
+                                    setTypeFilter(event.target.value);
+                                    setCurrentPage(1);
+                                }}
+                            >
+                                <option value="all">All Types</option>
+                                <option value="electricity">Electricity</option>
+                                <option value="climate">Climate</option>
+                            </select>
+                        </div>
+                    </div>
+                </CardHeader>
+
                 <CardContent className="overflow-x-auto">
                     <table className="w-full text-sm">
-                        <thead><tr className="border-b text-left"><th className="py-2">File</th><th>Type</th><th>Status</th><th>Records</th><th></th></tr></thead>
-                        <tbody>{datasets.map((item) => (
-                            <tr key={item.id} className="border-b">
-                                <td className="py-2">{item.original_name}</td><td>{item.type}</td><td>{item.status}</td><td>{item.record_count}</td>
-                                <td className="text-right"><Button variant="destructive" size="sm" onClick={() => router.delete(`/admin/data-management/${item.id}`)}>Delete</Button></td>
+                        <thead>
+                            <tr className="border-b bg-muted/40 text-left">
+                                <th className="px-3 py-3 font-semibold">File</th>
+                                <th className="px-3 py-3 font-semibold">Type</th>
+                                <th className="px-3 py-3 font-semibold">Status</th>
+                                <th className="px-3 py-3 font-semibold">Records</th>
+                                <th className="px-3 py-3 text-right font-semibold">Action</th>
                             </tr>
-                        ))}</tbody>
+                        </thead>
+
+                        <tbody>
+                            {paginatedDatasets.length > 0 ? (
+                                paginatedDatasets.map((item) => (
+                                    <tr key={item.id} className="border-b">
+                                        <td className="px-3 py-3">{item.original_name}</td>
+                                        <td className="px-3 py-3 capitalize">{item.type}</td>
+                                        <td className="px-3 py-3">{item.status}</td>
+                                        <td className="px-3 py-3">{item.record_count}</td>
+                                        <td className="px-3 py-3">
+                                            <div className="flex justify-end">
+                                                <Button
+                                                    variant="destructive"
+                                                    size="icon"
+                                                    onClick={() => openDeleteConfirmation(item)}
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td
+                                        colSpan={5}
+                                        className="px-3 py-8 text-center text-muted-foreground"
+                                    >
+                                        No datasets found.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
                     </table>
+
+                    <div className="mt-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                        <p className="text-sm text-muted-foreground">
+                            Showing {paginatedDatasets.length} of {filteredDatasets.length} datasets
+                        </p>
+
+                        <div className="flex items-center gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={currentPage === 1}
+                                onClick={() => setCurrentPage(currentPage - 1)}
+                            >
+                                Previous
+                            </Button>
+
+                            <span className="text-sm">
+                                Page {currentPage} of {totalPages || 1}
+                            </span>
+
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={currentPage === totalPages || totalPages === 0}
+                                onClick={() => setCurrentPage(currentPage + 1)}
+                            >
+                                Next
+                            </Button>
+                        </div>
+                    </div>
                 </CardContent>
             </Card>
+
+            {openUploadModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+                    <div className="w-full max-w-xl rounded-xl bg-white p-6 shadow-lg">
+                        <div className="mb-5 flex items-center justify-between">
+                            <div>
+                                <h2 className="text-xl font-semibold">Upload Dataset</h2>
+                                <p className="text-sm text-muted-foreground">
+                                    Upload electricity or climate CSV dataset.
+                                </p>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={() => setOpenUploadModal(false)}
+                                className="rounded-md px-2 py-1 text-xl text-gray-500 hover:bg-gray-100"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        <form className="space-y-4" onSubmit={submitUpload}>
+                            <select
+                                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                                value={data.type}
+                                onChange={(event) => setData('type', event.target.value)}
+                            >
+                                <option value="electricity">Electricity Consumption</option>
+                                <option value="climate">Climate</option>
+                            </select>
+
+                            <Input
+                                type="file"
+                                accept=".csv,text/csv"
+                                onChange={(event) =>
+                                    setData('dataset', event.target.files?.[0] ?? null)
+                                }
+                            />
+
+                            <label className="flex items-center gap-2 text-sm">
+                                <input
+                                    type="checkbox"
+                                    checked={data.replace_existing}
+                                    onChange={(event) =>
+                                        setData('replace_existing', event.target.checked)
+                                    }
+                                />
+                                Replace existing records
+                            </label>
+
+                            <p className="text-xs text-muted-foreground">
+                                Required columns:{' '}
+                                {requiredColumns[data.type]?.join(', ') || 'No required columns'}
+                            </p>
+
+                            <div className="flex justify-end gap-2 pt-3">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setOpenUploadModal(false)}
+                                >
+                                    Cancel
+                                </Button>
+
+                                <Button disabled={processing}>
+                                    {processing ? 'Uploading...' : 'Upload CSV'}
+                                </Button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {openDeleteModal && selectedDataset && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+                    <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-lg">
+                        <div className="mb-5 flex items-center justify-between">
+                            <h2 className="text-xl font-semibold text-red-600">
+                                Confirm Delete
+                            </h2>
+
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setOpenDeleteModal(false);
+                                    setSelectedDataset(null);
+                                    setDeletePassword('');
+                                }}
+                                className="rounded-md px-2 py-1 text-xl text-gray-500 hover:bg-gray-100"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        <p className="text-sm text-muted-foreground">
+                            Are you sure you want to delete{' '}
+                            <span className="font-semibold text-black">
+                                {selectedDataset.original_name}
+                            </span>
+                            ? Enter your password to confirm.
+                        </p>
+
+                        <div className="mt-5">
+                            <Input
+                                type="password"
+                                placeholder="Enter your password"
+                                value={deletePassword}
+                                onChange={(event) => setDeletePassword(event.target.value)}
+                            />
+                        </div>
+
+                        <div className="mt-6 flex justify-end gap-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                    setOpenDeleteModal(false);
+                                    setSelectedDataset(null);
+                                    setDeletePassword('');
+                                }}
+                            >
+                                Cancel
+                            </Button>
+
+                            <Button
+                                variant="destructive"
+                                disabled={!deletePassword}
+                                onClick={confirmDelete}
+                            >
+                                Delete Dataset
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

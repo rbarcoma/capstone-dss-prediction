@@ -25,6 +25,10 @@ class AnalyticsController extends Controller
         $records = $query->orderBy('year')->orderBy('month')->get();
         $all = ProcessedRecord::query();
 
+        $highestConsumptionRecord = ProcessedRecord::query()
+            ->orderByDesc('consumption_kwh')
+            ->first();
+
         return Inertia::render('Admin/Analytics', [
             'filters' => $request->only('year', 'month'),
             'records' => $records,
@@ -49,7 +53,9 @@ class AnalyticsController extends Controller
                 ->get(),
             'summary' => [
                 'average_consumption' => round((float) $all->avg('consumption_kwh'), 2),
-                'highest_consumption' => round((float) ProcessedRecord::max('consumption_kwh'), 2),
+                'highest_consumption' => round((float) ($highestConsumptionRecord?->consumption_kwh ?? 0), 2),
+                'highest_consumption_year' => $highestConsumptionRecord?->year,
+                'highest_consumption_month' => $highestConsumptionRecord?->month,
                 'average_peak_demand' => round((float) ProcessedRecord::avg('peak_demand_kw'), 2),
                 'average_solar_irradiance' => round((float) ProcessedRecord::avg('solar_irradiance'), 2),
             ],
