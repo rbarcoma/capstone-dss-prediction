@@ -21,7 +21,7 @@ export default function Users({ users = [] }: { users: User[] }) {
     const [roleFilter, setRoleFilter] = useState('all');
     const [currentPage, setCurrentPage] = useState(1);
 
-    const itemsPerPage = 5;
+    const [itemsPerPage, setItemsPerPage] = useState(10);
 
     const {
         data,
@@ -180,6 +180,19 @@ export default function Users({ users = [] }: { users: User[] }) {
                                 <option value="admin">Admin</option>
                                 <option value="user">User</option>
                             </select>
+
+                            <select
+                                className="rounded-md border bg-background px-3 py-2 text-sm"
+                                value={itemsPerPage}
+                                onChange={(event) => {
+                                    setItemsPerPage(Number(event.target.value));
+                                    setCurrentPage(1);
+                                }}
+                            >
+                                <option value={10}>10</option>
+                                <option value={50}>50</option>
+                                <option value={100}>100</option>
+                            </select>
                         </div>
                     </div>
                 </CardHeader>
@@ -201,12 +214,12 @@ export default function Users({ users = [] }: { users: User[] }) {
                             {paginatedUsers.length > 0 ? (
                                 paginatedUsers.map((user) => (
                                     <tr key={user.id} className="border-b">
-                                        <td className="px-3 py-3">{user.name}</td>
-                                        <td className="px-3 py-3">{user.email}</td>
-                                        <td className="px-3 py-3 capitalize">
+                                        <td className="px-3 py-1">{user.name}</td>
+                                        <td className="px-3 py-1">{user.email}</td>
+                                        <td className="px-3 py-1 capitalize">
                                             {user.role}
                                         </td>
-                                        <td className="px-3 py-3">
+                                        <td className="px-3 py-1">
                                             <div className="flex justify-end gap-2">
                                                 <Button
                                                     variant="outline"

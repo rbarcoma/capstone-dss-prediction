@@ -10,7 +10,8 @@ import {
     FileText,
     Users,
     BookOpen,
-    FolderGit2
+    FolderGit2,
+    ClipboardList
 } from 'lucide-react'
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
@@ -63,6 +64,11 @@ const adminNavItems: NavItem[] = [
             title: 'Reports',
             href: '/admin/reports',
             icon: FileText,
+        },
+        {
+            title: 'Audit Trail',
+            href: '/admin/audit-trail',
+            icon: ClipboardList,
         },
         {
             title: 'User Management',

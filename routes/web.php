@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\PreprocessingController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\User\ViewerController;
+use App\Http\Controllers\Admin\AuditTrailController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -54,8 +55,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('/users', [UserManagementController::class, 'index'])->name('admin.users');
     Route::post('/users', [UserManagementController::class, 'store'])->name('admin.users.store');
     Route::put('/users/{user}', [UserManagementController::class, 'update'])->name('admin.users.update');
-
     Route::delete('/users/{user}', [UserManagementController::class, 'destroy'])->name('admin.users.destroy');
+
+    Route::get('/audit-trail', [AuditTrailController::class, 'index'])->name('admin.audit-trail');
 });
 
 Route::middleware(['auth'])->prefix('user')->group(function () {

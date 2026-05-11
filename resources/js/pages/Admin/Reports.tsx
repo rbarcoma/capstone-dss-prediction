@@ -13,7 +13,7 @@ export default function Reports({ reports = [] }: { reports: Report[] }) {
     const [typeFilter, setTypeFilter] = useState('all');
     const [currentPage, setCurrentPage] = useState(1);
 
-    const itemsPerPage = 5;
+    const [itemsPerPage, setItemsPerPage] = useState(10);
 
     const filteredReports = useMemo(() => {
         return reports.filter((report) => {
@@ -100,6 +100,19 @@ export default function Reports({ reports = [] }: { reports: Report[] }) {
                                     </option>
                                 ))}
                             </select>
+
+                            <select
+                                className="rounded-md border bg-background px-3 py-2 text-sm"
+                                value={itemsPerPage}
+                                onChange={(event) => {
+                                    setItemsPerPage(Number(event.target.value));
+                                    setCurrentPage(1);
+                                }}
+                            >
+                                <option value={10}>10</option>
+                                <option value={50}>50</option>
+                                <option value={100}>100</option>
+                            </select>
                         </div>
                     </div>
                 </CardHeader>
@@ -121,12 +134,12 @@ export default function Reports({ reports = [] }: { reports: Report[] }) {
                             {paginatedReports.length > 0 ? (
                                 paginatedReports.map((report) => (
                                     <tr key={report.id} className="border-b">
-                                        <td className="px-3 py-3">{report.title}</td>
-                                        <td className="px-3 py-3">{report.type}</td>
-                                        <td className="px-3 py-3">
+                                        <td className="px-3 py-1">{report.title}</td>
+                                        <td className="px-3 py-1">{report.type}</td>
+                                        <td className="px-3 py-1">
                                             {new Date(report.created_at).toLocaleString()}
                                         </td>
-                                        <td className="px-3 py-3">
+                                        <td className="px-3 py-1">
                                             <div className="flex justify-end">
                                                 <Button
                                                     asChild

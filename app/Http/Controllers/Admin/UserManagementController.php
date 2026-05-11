@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Support\AuditLogger;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -26,7 +27,13 @@ class UserManagementController extends Controller
             'password' => ['required', 'string', 'min:8'],
         ]);
 
-        User::create($data);
+        $user = User::create($data);
+
+        AuditLogger::log(
+            'User Management',
+            'Add User',
+            'Created new user account: ' . $user->email . '.'
+        );
 
         return back()->with('success', 'User created.');
     }
@@ -46,13 +53,28 @@ class UserManagementController extends Controller
 
         $user->update($data);
 
+        AuditLogger::log(
+            'User Management',
+            'Edit User',
+            'Updated user account: ' . $user->email . '.'
+        );
+
         return back()->with('success', 'User updated.');
     }
 
     public function destroy(User $user)
     {
         abort_if($user->id === auth()->id(), 422, 'You cannot delete your own account.');
+
+        $email = $user->email;
+
         $user->delete();
+
+        AuditLogger::log(
+            'User Management',
+            'Delete User',
+            'Deleted user account: ' . $email . '.'
+        );
 
         return back()->with('success', 'User deleted.');
     }

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\DssResult;
 use App\Models\ForecastResult;
 use App\Models\ProcessedRecord;
+use App\Support\AuditLogger;
 use App\Models\Report;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -37,12 +38,24 @@ class ReportController extends Controller
             ],
         ]);
 
+        AuditLogger::log(
+            'Reports',
+            'Generate Report',
+            'Generated report: ' . $report->title . '.'
+        );
+
         return back()->with('success', "Report #{$report->id} generated.");
     }
 
     public function download(Report $report)
     {
         $html = view('reports.energy', ['report' => $report])->render();
+        
+        AuditLogger::log(
+            'Reports',
+            'Open / Print Report',
+            'Opened or printed report: ' . $report->title . '.'
+        );
 
         return response($html, 200, [
             'Content-Type' => 'text/html',

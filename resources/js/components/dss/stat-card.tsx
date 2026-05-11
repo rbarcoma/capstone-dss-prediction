@@ -39,8 +39,17 @@ export function StatCard({
             </CardHeader>
 
             <CardContent>
-                <div className="text-2xl font-semibold">{value}</div>
-                {helper && <p className="mt-1 text-xs text-muted-foreground">{helper}</p>}
+                <div className="flex items-end justify-between gap-3">
+                    <div className="text-2xl font-semibold">
+                        {value}
+                    </div>
+
+                    {helper && (
+                        <p className="pb-1 text-xs text-muted-foreground">
+                            {helper}
+                        </p>
+                    )}
+                </div>
             </CardContent>
         </Card>
     );

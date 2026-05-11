@@ -24,7 +24,7 @@ export default function DataManagement({
     const [typeFilter, setTypeFilter] = useState('all');
     const [currentPage, setCurrentPage] = useState(1);
 
-    const itemsPerPage = 5;
+    const [itemsPerPage, setItemsPerPage] = useState(10);
 
     const { data, setData, post, processing, reset } = useForm<{
         type: string;
@@ -152,6 +152,19 @@ export default function DataManagement({
                                 <option value="electricity">Electricity</option>
                                 <option value="climate">Climate</option>
                             </select>
+
+                            <select
+                                className="rounded-md border bg-background px-3 py-2 text-sm"
+                                value={itemsPerPage}
+                                onChange={(event) => {
+                                    setItemsPerPage(Number(event.target.value));
+                                    setCurrentPage(1);
+                                }}
+                            >
+                                <option value={10}>10</option>
+                                <option value={50}>50</option>
+                                <option value={100}>100</option>
+                            </select>
                         </div>
                     </div>
                 </CardHeader>
@@ -172,11 +185,11 @@ export default function DataManagement({
                             {paginatedDatasets.length > 0 ? (
                                 paginatedDatasets.map((item) => (
                                     <tr key={item.id} className="border-b">
-                                        <td className="px-3 py-3">{item.original_name}</td>
-                                        <td className="px-3 py-3 capitalize">{item.type}</td>
-                                        <td className="px-3 py-3">{item.status}</td>
-                                        <td className="px-3 py-3">{item.record_count}</td>
-                                        <td className="px-3 py-3">
+                                        <td className="px-3 py-1">{item.original_name}</td>
+                                        <td className="px-3 py-1 capitalize">{item.type}</td>
+                                        <td className="px-3 py-1">{item.status}</td>
+                                        <td className="px-3 py-1">{item.record_count}</td>
+                                        <td className="px-3 py-1">
                                             <div className="flex justify-end">
                                                 <Button
                                                     variant="destructive"

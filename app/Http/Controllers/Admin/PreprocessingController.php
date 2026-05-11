@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Support\AuditLogger;
 use App\Models\ClimateRecord;
 use App\Models\ConsumptionRecord;
 use App\Models\ProcessedRecord;
@@ -13,7 +14,11 @@ class PreprocessingController extends Controller
     public function index()
     {
         return Inertia::render('Admin/Preprocessing', [
-            'processedRecords' => ProcessedRecord::query()->orderByDesc('year')->orderByDesc('month')->take(30)->get(),
+            'processedRecords' => ProcessedRecord::query()
+                ->orderByDesc('year')
+                ->orderByDesc('month')
+                ->get(),
+
             'counts' => [
                 'consumption' => ConsumptionRecord::count(),
                 'climate' => ClimateRecord::count(),
@@ -24,17 +29,26 @@ class PreprocessingController extends Controller
 
     public function run()
     {
-        $consumption = ConsumptionRecord::query()->orderBy('year')->orderBy('month')->get();
-        $climate = ClimateRecord::all()->keyBy(fn ($record) => "{$record->year}-{$record->month}");
+        $consumption = ConsumptionRecord::query()
+            ->orderBy('year')
+            ->orderBy('month')
+            ->get();
+
+        $climate = ClimateRecord::query()
+            ->get()
+            ->keyBy(fn ($record) => "{$record->year}-{$record->month}");
 
         if ($consumption->count() < 3) {
             return back()->with('error', 'At least 3 monthly consumption records are required.');
         }
 
         ProcessedRecord::truncate();
+
         $rows = [];
+
         foreach ($consumption as $index => $record) {
             $climateRecord = $climate->get("{$record->year}-{$record->month}");
+
             $rows[] = [
                 'year' => $record->year,
                 'month' => $record->month,
@@ -56,6 +70,12 @@ class PreprocessingController extends Controller
             ProcessedRecord::create($row);
         }
 
-        return back()->with('success', count($rows).' processed records generated.');
+        AuditLogger::log(
+            'Preprocessing',
+            'Run Preprocessing',
+            count($rows) . ' processed records generated with ML features.'
+        );
+
+        return back()->with('success', count($rows) . ' processed records generated.');
     }
 }

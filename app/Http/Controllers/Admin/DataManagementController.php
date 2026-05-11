@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\ClimateRecord;
 use App\Models\ConsumptionRecord;
+use App\Support\AuditLogger;
 use App\Models\Dataset;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -88,13 +89,28 @@ class DataManagementController extends Controller
 
         $dataset->update(['status' => 'valid', 'record_count' => $count]);
 
+        AuditLogger::log(
+            'Data Management',
+            'Upload Dataset',
+            'Uploaded ' . $data['type'] . ' dataset CSV with ' . $count . ' records.'
+        );
+
         return back()->with('success', "{$count} {$data['type']} records uploaded.");
     }
 
     public function destroy(Dataset $dataset)
     {
+        $fileName = $dataset->original_name;
+        $type = $dataset->type;
+
         Storage::delete($dataset->path);
         $dataset->delete();
+
+        AuditLogger::log(
+            'Data Management',
+            'Delete Dataset',
+            'Deleted ' . $type . ' dataset: ' . $fileName . '.'
+        );
 
         return back()->with('success', 'Dataset entry deleted.');
     }

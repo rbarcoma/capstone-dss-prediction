@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\DssResult;
 use App\Models\ForecastResult;
 use App\Models\ProcessedRecord;
+use App\Support\AuditLogger;
 use App\Support\EnergyDss;
 use Inertia\Inertia;
 
@@ -45,6 +46,12 @@ class DecisionSupportController extends Controller
                 'solar_irradiance' => (float) ($latest?->solar_irradiance ?? 0),
             ],
         ]);
+
+        AuditLogger::log(
+            'Decision Support',
+            'Generate DSS Result',
+            'Generated DSS result: ' . $demand . ' and ' . $readiness . '.'
+        );
 
         return back()->with('success', 'Decision support recommendations generated.');
     }

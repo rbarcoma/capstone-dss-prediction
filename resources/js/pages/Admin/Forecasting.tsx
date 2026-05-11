@@ -26,7 +26,7 @@ export default function Forecasting({
     const [modelFilter, setModelFilter] = useState('all');
     const [currentPage, setCurrentPage] = useState(1);
 
-    const itemsPerPage = 5;
+    const [itemsPerPage, setItemsPerPage] = useState(10);
 
     const filteredForecasts = useMemo(() => {
         return forecastHistory.filter((item) => {
@@ -181,6 +181,18 @@ export default function Forecasting({
                                         {model}
                                     </option>
                                 ))}
+                            </select>
+                            <select
+                                className="rounded-md border bg-background px-3 py-2 text-sm"
+                                value={itemsPerPage}
+                                onChange={(event) => {
+                                    setItemsPerPage(Number(event.target.value));
+                                    setCurrentPage(1);
+                                }}
+                            >
+                                <option value={10}>10</option>
+                                <option value={50}>50</option>
+                                <option value={100}>100</option>
                             </select>
                         </div>
                     </div>
