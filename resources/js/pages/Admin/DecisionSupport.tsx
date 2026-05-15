@@ -254,9 +254,9 @@ export default function DecisionSupport({
                     <table className="w-full text-sm">
                         <thead>
                             <tr className="border-b bg-muted/40 text-left">
-                                <th className="px-3 py-2 font-semibold">Demand Status</th>
-                                <th className="px-3 py-2 font-semibold">Readiness Level</th>
-                                <th className="px-3 py-2 font-semibold">Generated</th>
+                                <th className="px-3 py-3 font-semibold">Demand Status</th>
+                                <th className="px-3 py-3 font-semibold">Readiness Level</th>
+                                <th className="px-3 py-3 font-semibold">Generated</th>
                             </tr>
                         </thead>
 

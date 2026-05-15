@@ -25,8 +25,8 @@ class ViewerController extends Controller
     public function forecasts()
     {
         return Inertia::render('User/ForecastResults', [
-            'latestForecast' => ForecastResult::latest()->first(),
-            'forecastHistory' => ForecastResult::latest()->take(20)->get(),
+            'latestForecast' => ForecastResult::with('user:id,name')->latest('predicted_at')->first(),
+            'forecastHistory' => ForecastResult::with('user:id,name')->latest('predicted_at')->take(20)->get(),
         ]);
     }
 
@@ -48,7 +48,7 @@ class ViewerController extends Controller
     private function sharedData(): array
     {
         $latestProcessed = ProcessedRecord::query()->orderByDesc('year')->orderByDesc('month')->first();
-        $latestForecast = ForecastResult::latest()->first();
+        $latestForecast = ForecastResult::latest('predicted_at')->first();
         $latestDss = DssResult::latest()->first();
 
         return [
@@ -59,7 +59,7 @@ class ViewerController extends Controller
                 'readiness_level' => $latestDss?->readiness_level ?? 'No assessment',
             ],
             'recommendations' => $latestDss?->recommendations ?? [],
-            'forecastHistory' => ForecastResult::latest()->take(10)->get(),
+            'forecastHistory' => ForecastResult::latest('predicted_at')->take(10)->get(),
             'trend' => ProcessedRecord::query()->select('year', 'month', 'consumption_kwh')->orderBy('year')->orderBy('month')->take(24)->get(),
         ];
     }

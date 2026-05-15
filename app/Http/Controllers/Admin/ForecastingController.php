@@ -8,6 +8,7 @@ use App\Models\ForecastResult;
 use App\Models\ProcessedRecord;
 use App\Support\AuditLogger;
 use App\Support\EnergyDss;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -17,8 +18,8 @@ class ForecastingController extends Controller
     public function index()
     {
         return Inertia::render('Admin/Forecasting', [
-            'latestForecast' => ForecastResult::latest()->first(),
-            'forecastHistory' => ForecastResult::latest()->take(20)->get(),
+            'latestForecast' => ForecastResult::with('user:id,name')->latest('predicted_at')->first(),
+            'forecastHistory' => ForecastResult::with('user:id,name')->latest('predicted_at')->take(20)->get(),
         ]);
     }
 
@@ -40,7 +41,7 @@ class ForecastingController extends Controller
         return back()->with('success', 'Model trained successfully. ' . $result->output());
     }
 
-    public function predict()
+    public function predict(Request $request)
     {
         $this->exportProcessedDataset();
         $result = $this->runPython('predict_next_month.py');
@@ -55,9 +56,12 @@ class ForecastingController extends Controller
             return back()->with('error', 'Invalid JSON output from Python prediction script.');
         }
 
-        $forecast = ForecastResult::create([
+        $forecast = ForecastResult::updateOrCreate([
             'year' => $data['year'],
             'month' => $data['month'],
+        ], [
+            'user_id' => $request->user()?->id,
+            'predicted_at' => now(),
             'predicted_consumption_kwh' => $data['predicted_consumption_kwh'],
             'previous_consumption_kwh' => $data['previous_consumption_kwh'] ?? null,
             'change_percent' => $data['change_percent'] ?? null,
@@ -166,8 +170,9 @@ class ForecastingController extends Controller
             $readiness
         );
 
-        DssResult::create([
+        DssResult::updateOrCreate([
             'forecast_result_id' => $forecast->id,
+        ], [
             'demand_status' => $demand,
             'readiness_level' => $readiness,
             'recommendations' => $recommendations,

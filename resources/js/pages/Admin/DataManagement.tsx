@@ -5,6 +5,7 @@ import type { Dataset } from '@/types';
 import { router, useForm, usePage } from '@inertiajs/react';
 import { Search, Trash2, Upload } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 export default function DataManagement({
     datasets = [],
@@ -63,11 +64,35 @@ export default function DataManagement({
     const submitUpload = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
+        const toastId = toast.loading('Uploading dataset...', {
+            description: 'Please wait while your dataset is being uploaded.',
+        });
+
         post('/admin/data-management', {
             forceFormData: true,
+
+            onProgress: (progress) => {
+                toast.loading(`Uploading dataset... ${progress.percentage ?? 0}%`, {
+                    id: toastId,
+                    description: 'Please wait while your dataset is being uploaded.',
+                });
+            },
+
             onSuccess: () => {
+                toast.success('Dataset uploaded successfully.', {
+                    id: toastId,
+                    description: 'The dataset has been validated and saved.',
+                });
+
                 reset();
                 setOpenUploadModal(false);
+            },
+
+            onError: () => {
+                toast.error('Upload failed.', {
+                    id: toastId,
+                    description: 'Please check the CSV format and try again.',
+                });
             },
         });
     };

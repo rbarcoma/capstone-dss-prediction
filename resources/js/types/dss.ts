@@ -22,6 +22,12 @@ export type ProcessedRecord = {
 
 export type ForecastResult = {
     id: number;
+    user_id?: number;
+    user?: {
+        id: number;
+        name: string;
+    } | null;
+    predicted_at?: string;
     year: number;
     month: number;
     predicted_consumption_kwh: number;

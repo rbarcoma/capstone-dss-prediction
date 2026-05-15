@@ -7,6 +7,7 @@ use App\Support\AuditLogger;
 use App\Models\ClimateRecord;
 use App\Models\ConsumptionRecord;
 use App\Models\ProcessedRecord;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class PreprocessingController extends Controller
@@ -21,7 +22,14 @@ class PreprocessingController extends Controller
 
             'counts' => [
                 'consumption' => ConsumptionRecord::count(),
-                'climate' => ClimateRecord::count(),
+                'climate' => ClimateRecord::query()
+                    ->whereExists(function ($query) {
+                        $query->select(DB::raw(1))
+                            ->from('consumption_records')
+                            ->whereColumn('consumption_records.year', 'climate_records.year')
+                            ->whereColumn('consumption_records.month', 'climate_records.month');
+                    })
+                    ->count(),
                 'processed' => ProcessedRecord::count(),
             ],
         ]);

@@ -1,0 +1,41 @@
+{
+    "best_model": "Linear Regression",
+    "selection_basis": "Lowest Cross-Validation RMSE",
+    "best_metrics": {
+        "mae": 42835.9933,
+        "rmse": 53019.5424,
+        "r2_score": 0.836,
+        "cv_mae": 59124.0379,
+        "cv_rmse": 71333.5767,
+        "cv_r2_score": 0.3707
+    },
+    "all_metrics": [
+        {
+            "model_type": "Linear Regression",
+            "mae": 42835.9933,
+            "rmse": 53019.5424,
+            "r2_score": 0.836,
+            "cv_mae": 59124.0379,
+            "cv_rmse": 71333.5767,
+            "cv_r2_score": 0.3707
+        },
+        {
+            "model_type": "Random Forest Regression",
+            "mae": 19014.1963,
+            "rmse": 24927.8627,
+            "r2_score": 0.9637,
+            "cv_mae": 69856.1215,
+            "cv_rmse": 86541.2876,
+            "cv_r2_score": 0.1057
+        },
+        {
+            "model_type": "XGBoost Regressor",
+            "mae": 19942.8717,
+            "rmse": 25188.3602,
+            "r2_score": 0.963,
+            "cv_mae": 69644.2358,
+            "cv_rmse": 84736.8694,
+            "cv_r2_score": 0.1321
+        }
+    ]
+}

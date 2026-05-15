@@ -27,15 +27,33 @@ export default function Forecasting({
     const [currentPage, setCurrentPage] = useState(1);
 
     const [itemsPerPage, setItemsPerPage] = useState(10);
+    const latestForecastId = latestForecast?.id;
+
+    const formatPredictionDate = (value?: string) => {
+        if (!value) {
+            return '-';
+        }
+
+        return new Intl.DateTimeFormat('en-PH', {
+            dateStyle: 'medium',
+            timeStyle: 'short',
+        }).format(new Date(value));
+    };
 
     const filteredForecasts = useMemo(() => {
         return forecastHistory.filter((item) => {
             const period = `${item.year}-${String(item.month).padStart(2, '0')}`;
             const model = item.model_type?.toLowerCase() ?? '';
+            const predictedBy = item.user?.name?.toLowerCase() ?? 'admin';
+            const predictedAt = formatPredictionDate(
+                item.predicted_at ?? item.created_at,
+            ).toLowerCase();
 
             const matchesSearch =
                 period.includes(search.toLowerCase()) ||
-                model.includes(search.toLowerCase());
+                model.includes(search.toLowerCase()) ||
+                predictedBy.includes(search.toLowerCase()) ||
+                predictedAt.includes(search.toLowerCase());
 
             const matchesModel =
                 modelFilter === 'all' || item.model_type === modelFilter;
@@ -202,6 +220,8 @@ export default function Forecasting({
                     <table className="w-full text-sm">
                         <thead>
                             <tr className="border-b bg-muted/40 text-left">
+                                <th className="px-3 py-3 font-semibold">Predicted At</th>
+                                <th className="px-3 py-3 font-semibold">Predicted By</th>
                                 <th className="px-3 py-3 font-semibold">Period</th>
                                 <th className="px-3 py-3 font-semibold">Prediction</th>
                                 <th className="px-3 py-3 font-semibold">Change</th>
@@ -212,29 +232,42 @@ export default function Forecasting({
 
                         <tbody>
                             {paginatedForecasts.length > 0 ? (
-                                paginatedForecasts.map((item) => (
-                                    <tr key={item.id} className="border-b">
-                                        <td className="px-3 py-3">
-                                            {item.year}-{String(item.month).padStart(2, '0')}
-                                        </td>
-                                        <td className="px-3 py-3">
-                                            {item.predicted_consumption_kwh} kWh
-                                        </td>
-                                        <td className="px-3 py-3">
-                                            {item.change_percent ?? 0}%
-                                        </td>
-                                        <td className="px-3 py-3">
-                                            {item.rmse ?? '-'}
-                                        </td>
-                                        <td className="px-3 py-3">
-                                            {item.model_type}
-                                        </td>
-                                    </tr>
-                                ))
+                                paginatedForecasts.map((item) => {
+                                    const isLatest = item.id === latestForecastId;
+
+                                    return (
+                                        <tr
+                                            key={item.id}
+                                            className={`border-b ${isLatest ? 'bg-primary/5 font-bold' : ''}`}
+                                        >
+                                            <td className="px-3 py-3">
+                                                {formatPredictionDate(item.predicted_at ?? item.created_at)}
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                {item.user?.name ?? 'Admin'}
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                {item.year}-{String(item.month).padStart(2, '0')}
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                {item.predicted_consumption_kwh} kWh
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                {item.change_percent ?? 0}%
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                {item.rmse ?? '-'}
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                {item.model_type}
+                                            </td>
+                                        </tr>
+                                    );
+                                })
                             ) : (
                                 <tr>
                                     <td
-                                        colSpan={5}
+                                        colSpan={7}
                                         className="px-3 py-8 text-center text-muted-foreground"
                                     >
                                         No forecast history found.

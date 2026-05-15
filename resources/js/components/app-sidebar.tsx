@@ -9,10 +9,9 @@ import {
     Lightbulb,
     FileText,
     Users,
-    BookOpen,
     FolderGit2,
     ClipboardList
-} from 'lucide-react'
+} from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -31,50 +30,50 @@ import type { NavItem } from '@/types';
 
 const adminNavItems: NavItem[] = [
     {
-            title: 'Dashboard',
-            href: '/admin/dashboard',
-            icon: LayoutGrid,
-        },
-        {
-            title: 'Data Management',
-            href: '/admin/data-management',
-            icon: Database,
-        },
-        {
-            title: 'Preprocessing',
-            href: '/admin/data-preprocessing',
-            icon: Settings2,
-        },
-        {
-            title: 'Analytics',
-            href: '/admin/analytics',
-            icon: BarChart3,
-        },
-        {
-            title: 'Forecasting',
-            href: '/admin/forecasting',
-            icon: Brain,
-        },
-        {
-            title: 'Decision Support',
-            href: '/admin/decision-support',
-            icon: Lightbulb,
-        },
-        {
-            title: 'Reports',
-            href: '/admin/reports',
-            icon: FileText,
-        },
-        {
-            title: 'Audit Trail',
-            href: '/admin/audit-trail',
-            icon: ClipboardList,
-        },
-        {
-            title: 'User Management',
-            href: '/admin/users',
-            icon: Users,
-        },
+        title: 'Dashboard',
+        href: '/admin/dashboard',
+        icon: LayoutGrid,
+    },
+    {
+        title: 'Data Management',
+        href: '/admin/data-management',
+        icon: Database,
+    },
+    {
+        title: 'Preprocessing',
+        href: '/admin/data-preprocessing',
+        icon: Settings2,
+    },
+    {
+        title: 'Analytics',
+        href: '/admin/analytics',
+        icon: BarChart3,
+    },
+    {
+        title: 'Forecasting',
+        href: '/admin/forecasting',
+        icon: Brain,
+    },
+    {
+        title: 'Decision Support',
+        href: '/admin/decision-support',
+        icon: Lightbulb,
+    },
+    {
+        title: 'Reports',
+        href: '/admin/reports',
+        icon: FileText,
+    },
+    {
+        title: 'Audit Trail',
+        href: '/admin/audit-trail',
+        icon: ClipboardList,
+    },
+    {
+        title: 'User Management',
+        href: '/admin/users',
+        icon: Users,
+    },
 ];
 
 const userNavItems: NavItem[] = [
@@ -89,13 +88,8 @@ const userNavItems: NavItem[] = [
 const footerNavItems: NavItem[] = [
     {
         title: 'Repository',
-        href: 'https://github.com/laravel/react-starter-kit',
+        href: 'https://github.com/rbarcoma/capstone-dss-prediction',
         icon: FolderGit2,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#react',
-        icon: BookOpen,
     },
 ];
 
@@ -107,10 +101,14 @@ export function AppSidebar() {
 
     return (
         <Sidebar collapsible="icon" variant="inset">
-            <SidebarHeader>
+            <SidebarHeader className="px-4 pt-5">
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton size="lg" asChild>
+                        <SidebarMenuButton
+                            size="lg"
+                            asChild
+                            className="h-14 rounded-2xl px-2 hover:bg-emerald-50"
+                        >
                             <Link href={homeHref} prefetch>
                                 <AppLogo />
                             </Link>
@@ -119,11 +117,11 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarHeader>
 
-            <SidebarContent>
+            <SidebarContent className="px-2 py-4">
                 <NavMain items={mainNavItems} />
             </SidebarContent>
 
-            <SidebarFooter>
+            <SidebarFooter className="gap-3 px-3 pb-4">
                 <NavFooter items={footerNavItems} className="mt-auto" />
                 <NavUser />
             </SidebarFooter>

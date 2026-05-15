@@ -22,7 +22,7 @@ class DecisionSupportController extends Controller
 
     public function generate()
     {
-        $forecast = ForecastResult::latest()->first();
+        $forecast = ForecastResult::latest('predicted_at')->first();
         if (! $forecast) {
             return back()->with('error', 'Run a forecast before generating DSS recommendations.');
         }
@@ -33,8 +33,9 @@ class DecisionSupportController extends Controller
         $readiness = EnergyDss::readiness((float) ($latest?->solar_irradiance ?? 0), (float) ($latest?->peak_demand_kw ?? 0), (float) $forecast->predicted_consumption_kwh);
         [$recommendations, $actions] = EnergyDss::recommendations($forecast, $latest, $demand, $readiness);
 
-        DssResult::create([
+        DssResult::updateOrCreate([
             'forecast_result_id' => $forecast->id,
+        ], [
             'demand_status' => $demand,
             'readiness_level' => $readiness,
             'recommendations' => $recommendations,

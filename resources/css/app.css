@@ -68,7 +68,7 @@
     --card-foreground: oklch(0.145 0 0);
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
+    --primary: oklch(0.696 0.17 162.48);
     --primary-foreground: oklch(0.985 0 0);
     --secondary: oklch(0.97 0 0);
     --secondary-foreground: oklch(0.205 0 0);
@@ -80,19 +80,19 @@
     --destructive-foreground: oklch(0.577 0.245 27.325);
     --border: oklch(0.922 0 0);
     --input: oklch(0.922 0 0);
-    --ring: oklch(0.87 0 0);
+    --ring: oklch(0.696 0.17 162.48);
     --chart-1: oklch(0.646 0.222 41.116);
     --chart-2: oklch(0.6 0.118 184.704);
     --chart-3: oklch(0.398 0.07 227.392);
     --chart-4: oklch(0.828 0.189 84.429);
     --chart-5: oklch(0.769 0.188 70.08);
     --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
+    --sidebar: oklch(1 0 0);
     --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
+    --sidebar-primary: oklch(0.696 0.17 162.48);
     --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
+    --sidebar-accent: oklch(0.97 0.03 162.48);
+    --sidebar-accent-foreground: oklch(0.45 0.12 162.48);
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.87 0 0);
 }
@@ -146,3 +146,46 @@
     }
 }
 
+@layer components {
+    .admin-shell {
+        @apply min-h-screen bg-[#f5f6f8] text-slate-950;
+    }
+
+    .admin-shell > .space-y-6 {
+        @apply w-full max-w-none px-6 py-7 md:px-8;
+    }
+
+    .admin-shell h1 {
+        @apply tracking-tight text-slate-950;
+    }
+
+    .admin-shell [data-slot='card'] {
+        @apply w-full rounded-3xl border-slate-200 bg-white shadow-sm;
+    }
+
+    .admin-shell [data-slot='card-title'] {
+        @apply text-slate-950;
+    }
+
+    .admin-shell [data-slot='button']:not([data-variant='outline']):not([data-variant='ghost']) {
+        @apply rounded-2xl bg-emerald-500 font-semibold text-white shadow-sm shadow-emerald-500/20 hover:bg-emerald-600;
+    }
+
+    .admin-shell input,
+    .admin-shell select,
+    .admin-shell textarea {
+        @apply rounded-2xl border-slate-300 bg-white focus-visible:ring-emerald-500;
+    }
+
+    .admin-shell table {
+        @apply overflow-hidden;
+    }
+
+    .admin-shell thead tr {
+        @apply bg-slate-50 text-slate-700;
+    }
+
+    .admin-shell tbody tr {
+        @apply border-slate-200;
+    }
+}

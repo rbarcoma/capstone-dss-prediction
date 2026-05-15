@@ -16,7 +16,7 @@ class DashboardController extends Controller
     public function __invoke()
     {
         $latestProcessed = ProcessedRecord::query()->orderByDesc('year')->orderByDesc('month')->first();
-        $latestForecast = ForecastResult::latest()->first();
+        $latestForecast = ForecastResult::latest('predicted_at')->first();
         $latestDss = DssResult::latest()->first();
 
         return Inertia::render('Admin/Dashboard', [
@@ -30,7 +30,7 @@ class DashboardController extends Controller
                 'forecasts' => ForecastResult::count(),
                 'reports' => Report::count(),
             ],
-            'recentForecasts' => ForecastResult::latest()->take(5)->get(),
+            'recentForecasts' => ForecastResult::latest('predicted_at')->take(5)->get(),
             'recentReports' => Report::latest()->take(5)->get(),
             'trend' => ProcessedRecord::query()
                 ->select('year', 'month', 'consumption_kwh')

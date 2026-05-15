@@ -95,7 +95,7 @@ export default function Analytics({
         averageConsumption: {
             title: 'Average Consumption',
             content:
-                'Average Consumption represents the typical amount of electricity used within a specific period. It is calculated by adding all Consumption kWh values and dividing the total by the number of records. \n\nFormula: \naverage_consumption = consumption_kwh / number_of_records. \n\nThis helps identify the normal electricity usage trend over time.',
+                'Average Consumption represents the typical amount of electricity used within a specific period. It is calculated by adding all Consumption kWh values and dividing the total by the number of records. \n\nFormula: \naverage_consumption = total_consumption_kwh / number_of_records. \n\nThis helps identify the normal electricity usage trend over time.',
         },
         highestConsumption: {
             title: 'Highest Consumption',

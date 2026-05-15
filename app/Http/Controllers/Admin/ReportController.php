@@ -17,14 +17,14 @@ class ReportController extends Controller
     {
         return Inertia::render('Admin/Reports', [
             'reports' => Report::latest()->get(),
-            'latestForecast' => ForecastResult::latest()->first(),
+            'latestForecast' => ForecastResult::latest('predicted_at')->first(),
             'latestDss' => DssResult::latest()->first(),
         ]);
     }
 
     public function store(Request $request)
     {
-        $forecast = ForecastResult::latest()->first();
+        $forecast = ForecastResult::latest('predicted_at')->first();
         $dss = DssResult::latest()->first();
 
         $report = Report::create([
