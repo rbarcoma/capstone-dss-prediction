@@ -21,7 +21,7 @@ class DataManagementController extends Controller
     public function index()
     {
         return Inertia::render('Admin/DataManagement', [
-            'datasets' => Dataset::latest()->get(),
+            'datasets' => Dataset::with('user:id,name')->latest()->get(),
             'consumptionRecords' => ConsumptionRecord::query()->orderByDesc('year')->orderByDesc('month')->take(20)->get(),
             'climateRecords' => ClimateRecord::query()->orderByDesc('year')->orderByDesc('month')->take(20)->get(),
             'requiredColumns' => $this->required,

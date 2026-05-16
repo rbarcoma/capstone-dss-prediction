@@ -1,5 +1,10 @@
 export type Dataset = {
     id: number;
+    user_id?: number;
+    user?: {
+        id: number;
+        name: string;
+    } | null;
     type: string;
     original_name: string;
     status: string;
@@ -42,6 +47,11 @@ export type ForecastResult = {
 
 export type DssResult = {
     id: number;
+    user_id?: number;
+    user?: {
+        id: number;
+        name: string;
+    } | null;
     demand_status: string;
     readiness_level: string;
     recommendations: string[];
@@ -52,6 +62,11 @@ export type DssResult = {
 
 export type Report = {
     id: number;
+    user_id?: number;
+    user?: {
+        id: number;
+        name: string;
+    } | null;
     title: string;
     type: string;
     summary: Record<string, unknown>;

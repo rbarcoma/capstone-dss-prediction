@@ -42,9 +42,9 @@ export default function Register() {
                             </h2>
 
                             <p className="mt-7 max-w-lg text-lg leading-8 text-slate-600">
-                                Register your account to access analytics,
-                                reports, and renewable energy decision support
-                                tools in one platform.
+                                Register your account to access the dashboard.
+                                Additional analytics, forecast, DSS, and report
+                                modules require admin permission approval.
                             </p>
                         </div>
 
@@ -60,7 +60,8 @@ export default function Register() {
                                     Create account
                                 </h2>
                                 <p className="mt-2 text-sm text-slate-500">
-                                    Fill in your details to register.
+                                    Fill in your details to register. New accounts
+                                    start with dashboard access only.
                                 </p>
                             </div>
 

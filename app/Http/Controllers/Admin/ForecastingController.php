@@ -173,6 +173,7 @@ class ForecastingController extends Controller
         DssResult::updateOrCreate([
             'forecast_result_id' => $forecast->id,
         ], [
+            'user_id' => auth()->id(),
             'demand_status' => $demand,
             'readiness_level' => $readiness,
             'recommendations' => $recommendations,

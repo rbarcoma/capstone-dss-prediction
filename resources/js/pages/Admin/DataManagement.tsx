@@ -14,7 +14,7 @@ export default function DataManagement({
     datasets: Dataset[];
     requiredColumns: Record<string, string[]>;
 }) {
-    const { flash } = usePage().props as any;
+    const { auth, flash } = usePage().props as any;
 
     const [openUploadModal, setOpenUploadModal] = useState(false);
     const [openDeleteModal, setOpenDeleteModal] = useState(false);
@@ -42,11 +42,15 @@ export default function DataManagement({
             const fileName = item.original_name?.toLowerCase() ?? '';
             const type = item.type?.toLowerCase() ?? '';
             const status = item.status?.toLowerCase() ?? '';
+            const uploadedBy = item.user?.name?.toLowerCase() ?? auth?.user?.name?.toLowerCase() ?? '';
+            const uploadedAt = new Date(item.created_at).toLocaleString().toLowerCase();
 
             const matchesSearch =
                 fileName.includes(search.toLowerCase()) ||
                 type.includes(search.toLowerCase()) ||
-                status.includes(search.toLowerCase());
+                status.includes(search.toLowerCase()) ||
+                uploadedBy.includes(search.toLowerCase()) ||
+                uploadedAt.includes(search.toLowerCase());
 
             const matchesType = typeFilter === 'all' || item.type === typeFilter;
 
@@ -200,6 +204,8 @@ export default function DataManagement({
                             <tr className="border-b bg-muted/40 text-left">
                                 <th className="px-3 py-3 font-semibold">File</th>
                                 <th className="px-3 py-3 font-semibold">Type</th>
+                                <th className="px-3 py-3 font-semibold">Uploaded By</th>
+                                <th className="px-3 py-3 font-semibold">Uploaded At</th>
                                 <th className="px-3 py-3 font-semibold">Status</th>
                                 <th className="px-3 py-3 font-semibold">Records</th>
                                 <th className="px-3 py-3 text-right font-semibold">Action</th>
@@ -212,6 +218,12 @@ export default function DataManagement({
                                     <tr key={item.id} className="border-b">
                                         <td className="px-3 py-1">{item.original_name}</td>
                                         <td className="px-3 py-1 capitalize">{item.type}</td>
+                                        <td className="px-3 py-1">
+                                            {item.user?.name ?? auth?.user?.name ?? 'Admin'}
+                                        </td>
+                                        <td className="px-3 py-1">
+                                            {new Date(item.created_at).toLocaleString()}
+                                        </td>
                                         <td className="px-3 py-1">{item.status}</td>
                                         <td className="px-3 py-1">{item.record_count}</td>
                                         <td className="px-3 py-1">
@@ -230,7 +242,7 @@ export default function DataManagement({
                             ) : (
                                 <tr>
                                     <td
-                                        colSpan={5}
+                                        colSpan={7}
                                         className="px-3 py-8 text-center text-muted-foreground"
                                     >
                                         No datasets found.

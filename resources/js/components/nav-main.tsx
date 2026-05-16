@@ -9,7 +9,13 @@ import {
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import type { NavItem } from '@/types';
 
-export function NavMain({ items = [] }: { items: NavItem[] }) {
+export function NavMain({
+    items = [],
+    onDenied,
+}: {
+    items: NavItem[];
+    onDenied?: (item: NavItem) => void;
+}) {
     const { isCurrentUrl } = useCurrentUrl();
 
     return (
@@ -24,9 +30,18 @@ export function NavMain({ items = [] }: { items: NavItem[] }) {
                             asChild
                             isActive={isCurrentUrl(item.href)}
                             tooltip={{ children: item.title }}
-                            className="h-10 rounded-xl px-3 text-slate-700 transition-colors hover:bg-emerald-50 hover:text-emerald-700 data-[active=true]:bg-emerald-500 data-[active=true]:font-semibold data-[active=true]:text-white data-[active=true]:shadow-sm data-[active=true]:shadow-emerald-500/25 [&>svg]:text-current"
+                            className={`h-10 rounded-xl px-3 text-slate-700 transition-colors hover:bg-emerald-50 hover:text-emerald-700 data-[active=true]:bg-emerald-500 data-[active=true]:font-semibold data-[active=true]:text-white data-[active=true]:shadow-sm data-[active=true]:shadow-emerald-500/25 [&>svg]:text-current ${item.hasAccess === false ? 'opacity-60' : ''}`}
                         >
-                            <Link href={item.href} prefetch>
+                            <Link
+                                href={item.href}
+                                prefetch={item.hasAccess !== false}
+                                onClick={(event) => {
+                                    if (item.hasAccess === false) {
+                                        event.preventDefault();
+                                        onDenied?.(item);
+                                    }
+                                }}
+                            >
                                 {item.icon && <item.icon />}
                                 <span>{item.title}</span>
                             </Link>

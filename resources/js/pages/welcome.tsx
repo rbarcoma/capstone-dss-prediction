@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { dashboard, login, register } from '@/routes';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 
 const services = [
     {
@@ -49,7 +49,21 @@ export default function Welcome({
 }: {
     canRegister?: boolean;
 }) {
-    const { auth } = usePage().props as any;
+    const { auth, flash } = usePage().props as any;
+    const { data, setData, post, processing, errors, reset } = useForm({
+        name: '',
+        email: '',
+        message: '',
+    });
+
+    const submitContact = (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+
+        post('/contact', {
+            preserveScroll: true,
+            onSuccess: () => reset(),
+        });
+    };
 
     return (
         <>
@@ -298,7 +312,7 @@ export default function Welcome({
                                 <div className="rounded-2xl border bg-white p-5">
                                     <p className="font-bold">Email</p>
                                     <p className="mt-1 text-slate-600">
-                                        dssenergy@example.com
+                                        dsspredictionqc@gmail.com
                                     </p>
                                 </div>
                                 <div className="rounded-2xl border bg-white p-5">
@@ -316,16 +330,35 @@ export default function Welcome({
                             </div>
                         </div>
 
-                        <form className="rounded-3xl border border-slate-200 bg-white p-8 shadow-2xl shadow-slate-200/70">
+                        <form
+                            className="rounded-3xl border border-slate-200 bg-white p-8 shadow-2xl shadow-slate-200/70"
+                            onSubmit={submitContact}
+                        >
                             <div className="grid gap-5">
+                                {flash?.success && (
+                                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+                                        {flash.success}
+                                    </div>
+                                )}
+
                                 <div>
                                     <label className="text-sm font-medium">
                                         Full Name
                                     </label>
                                     <input
+                                        name="name"
+                                        value={data.name}
+                                        onChange={(event) =>
+                                            setData('name', event.target.value)
+                                        }
                                         className="mt-2 h-14 w-full rounded-2xl border px-4 outline-none focus:border-emerald-500"
                                         placeholder="Enter your full name"
                                     />
+                                    {errors.name && (
+                                        <p className="mt-2 text-sm text-red-600">
+                                            {errors.name}
+                                        </p>
+                                    )}
                                 </div>
 
                                 <div>
@@ -333,9 +366,20 @@ export default function Welcome({
                                         Email Address
                                     </label>
                                     <input
+                                        name="email"
+                                        type="email"
+                                        value={data.email}
+                                        onChange={(event) =>
+                                            setData('email', event.target.value)
+                                        }
                                         className="mt-2 h-14 w-full rounded-2xl border px-4 outline-none focus:border-emerald-500"
                                         placeholder="Enter your email"
                                     />
+                                    {errors.email && (
+                                        <p className="mt-2 text-sm text-red-600">
+                                            {errors.email}
+                                        </p>
+                                    )}
                                 </div>
 
                                 <div>
@@ -343,16 +387,27 @@ export default function Welcome({
                                         Message
                                     </label>
                                     <textarea
+                                        name="message"
+                                        value={data.message}
+                                        onChange={(event) =>
+                                            setData('message', event.target.value)
+                                        }
                                         className="mt-2 min-h-40 w-full rounded-2xl border px-4 py-4 outline-none focus:border-emerald-500"
                                         placeholder="Enter your message"
                                     />
+                                    {errors.message && (
+                                        <p className="mt-2 text-sm text-red-600">
+                                            {errors.message}
+                                        </p>
+                                    )}
                                 </div>
 
                                 <Button
-                                    type="button"
+                                    type="submit"
+                                    disabled={processing}
                                     className="h-14 rounded-2xl bg-emerald-500 font-semibold text-white hover:bg-emerald-600"
                                 >
-                                    Send Message
+                                    {processing ? 'Sending...' : 'Send Message'}
                                 </Button>
                             </div>
                         </form>

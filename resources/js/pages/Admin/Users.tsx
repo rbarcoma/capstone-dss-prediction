@@ -3,11 +3,28 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import type { User } from '@/types';
 import { router, useForm, usePage } from '@inertiajs/react';
-import { Pencil, Trash2 } from 'lucide-react';
+import { KeyRound, Pencil, ShieldCheck, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+type RbacRole = {
+    label: string;
+    scope: string;
+};
 
-export default function Users({ users = [] }: { users: User[] }) {
+type RbacModule = {
+    key: string;
+    label: string;
+};
+
+export default function Users({
+    users = [],
+    roles,
+    modules,
+}: {
+    users: User[];
+    roles: Record<string, RbacRole>;
+    modules: Record<string, RbacModule[]>;
+}) {
     const { flash, auth } = usePage().props as any;
 
     const [openAddModal, setOpenAddModal] = useState(false);
@@ -22,6 +39,8 @@ export default function Users({ users = [] }: { users: User[] }) {
     const [currentPage, setCurrentPage] = useState(1);
 
     const [itemsPerPage, setItemsPerPage] = useState(10);
+    const latestUserId = users[0]?.id;
+    const defaultUserPermissions = modules.user?.map((item) => item.key) ?? [];
 
     const {
         data,
@@ -33,6 +52,7 @@ export default function Users({ users = [] }: { users: User[] }) {
         name: '',
         email: '',
         role: 'user',
+        permissions: defaultUserPermissions,
         password: '',
     });
 
@@ -46,23 +66,61 @@ export default function Users({ users = [] }: { users: User[] }) {
         name: '',
         email: '',
         role: 'user',
+        permissions: defaultUserPermissions,
     });
+
+    const moduleLabel = (key: string) => {
+        return Object.values(modules)
+            .flat()
+            .find((module) => module.key === key)?.label ?? key;
+    };
+
+    const moduleOptionsForRole = (role: string) => modules[role] ?? [];
+
+    const defaultPermissionsForRole = (role: string) => {
+        return moduleOptionsForRole(role).map((module) => module.key);
+    };
+
+    const togglePermission = (
+        permission: string,
+        permissions: string[],
+        update: (value: string[]) => void,
+    ) => {
+        update(
+            permissions.includes(permission)
+                ? permissions.filter((item) => item !== permission)
+                : [...permissions, permission],
+        );
+    };
 
     const filteredUsers = useMemo(() => {
         return users.filter((user) => {
             const userName = user.name?.toLowerCase() ?? '';
             const userEmail = user.email?.toLowerCase() ?? '';
+            const createdAt = new Date(user.created_at).toLocaleString().toLowerCase();
+            const role = user.role ?? 'user';
+            const roleDetails = roles[role];
+            const permissions = user.permissions ?? defaultPermissionsForRole(role);
+            const roleText = [
+                roleDetails?.label,
+                roleDetails?.scope,
+                ...permissions.map(moduleLabel),
+            ]
+                .join(' ')
+                .toLowerCase();
 
             const matchesSearch =
                 userName.includes(search.toLowerCase()) ||
-                userEmail.includes(search.toLowerCase());
+                userEmail.includes(search.toLowerCase()) ||
+                createdAt.includes(search.toLowerCase()) ||
+                roleText.includes(search.toLowerCase());
 
             const matchesRole =
                 roleFilter === 'all' || user.role === roleFilter;
 
             return matchesSearch && matchesRole;
         });
-    }, [users, search, roleFilter]);
+    }, [users, roles, search, roleFilter, modules]);
 
     const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
 
@@ -88,6 +146,10 @@ export default function Users({ users = [] }: { users: User[] }) {
         setEditData('name', user.name ?? '');
         setEditData('email', user.email ?? '');
         setEditData('role', user.role ?? 'user');
+        setEditData(
+            'permissions',
+            user.permissions ?? defaultPermissionsForRole(user.role ?? 'user'),
+        );
 
         setOpenEditModal(true);
     };
@@ -133,7 +195,7 @@ export default function Users({ users = [] }: { users: User[] }) {
                 <div>
                     <h1 className="text-2xl font-semibold">User Management</h1>
                     <p className="text-sm text-muted-foreground">
-                        Create users, assign roles, and manage access.
+                        Role-based access control for system users and permissions.
                     </p>
                 </div>
 
@@ -152,10 +214,40 @@ export default function Users({ users = [] }: { users: User[] }) {
                 </div>
             )}
 
+            <div className="grid gap-4 md:grid-cols-2">
+                {Object.entries(roles).map(([key, role]) => (
+                    <Card key={key} className="rounded-lg">
+                        <CardHeader className="flex-row items-center justify-between gap-3 pb-2">
+                            <div>
+                                <CardTitle>{role.label} Role</CardTitle>
+                                <p className="mt-1 text-sm text-muted-foreground">
+                                    {role.scope}
+                                </p>
+                            </div>
+                            {key === 'admin' ? (
+                                <ShieldCheck className="size-5 text-emerald-600" />
+                            ) : (
+                                <KeyRound className="size-5 text-emerald-600" />
+                            )}
+                        </CardHeader>
+                        <CardContent>
+                            <ul className="grid gap-2 text-sm text-muted-foreground">
+                                {moduleOptionsForRole(key).map((module) => (
+                                    <li key={module.key} className="flex gap-2">
+                                        <span className="mt-2 h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                        <span>{module.label}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+
             <Card className="rounded-lg">
                 <CardHeader>
                     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                        <CardTitle>Users Table</CardTitle>
+                        <CardTitle>User Management Table</CardTitle>
 
                         <div className="flex flex-col gap-2 md:flex-row">
                             <Input
@@ -177,8 +269,11 @@ export default function Users({ users = [] }: { users: User[] }) {
                                 }}
                             >
                                 <option value="all">All Roles</option>
-                                <option value="admin">Admin</option>
-                                <option value="user">User</option>
+                                {Object.entries(roles).map(([key, role]) => (
+                                    <option key={key} value={key}>
+                                        {role.label}
+                                    </option>
+                                ))}
                             </select>
 
                             <select
@@ -204,6 +299,9 @@ export default function Users({ users = [] }: { users: User[] }) {
                                 <th className="px-3 py-3 font-semibold">Name</th>
                                 <th className="px-3 py-3 font-semibold">Email</th>
                                 <th className="px-3 py-3 font-semibold">Role</th>
+                                <th className="px-3 py-3 font-semibold">Access Scope</th>
+                                <th className="px-3 py-3 font-semibold">Permissions</th>
+                                <th className="px-3 py-3 font-semibold">Created At</th>
                                 <th className="px-3 py-3 text-right font-semibold">
                                     Action
                                 </th>
@@ -212,39 +310,59 @@ export default function Users({ users = [] }: { users: User[] }) {
 
                         <tbody>
                             {paginatedUsers.length > 0 ? (
-                                paginatedUsers.map((user) => (
-                                    <tr key={user.id} className="border-b">
-                                        <td className="px-3 py-1">{user.name}</td>
-                                        <td className="px-3 py-1">{user.email}</td>
-                                        <td className="px-3 py-1 capitalize">
-                                            {user.role}
-                                        </td>
-                                        <td className="px-3 py-1">
-                                            <div className="flex justify-end gap-2">
-                                                <Button
-                                                    variant="outline"
-                                                    size="icon"
-                                                    onClick={() => openEditUser(user)}
-                                                >
-                                                    <Pencil className="h-4 w-4" />
-                                                </Button>
+                                paginatedUsers.map((user) => {
+                                    const role = roles[user.role ?? 'user'];
+                                    const permissions =
+                                        user.permissions ??
+                                        defaultPermissionsForRole(user.role ?? 'user');
+                                    const isLatestUser = user.id === latestUserId;
 
-                                                <Button
-                                                    variant="destructive"
-                                                    size="icon"
-                                                    disabled={user.id === auth.user.id}
-                                                    onClick={() => openDeleteConfirmation(user)}
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))
+                                    return (
+                                        <tr
+                                            key={user.id}
+                                            className={`border-b ${isLatestUser ? 'bg-emerald-50 font-bold' : ''}`}
+                                        >
+                                            <td className="px-3 py-2">{user.name}</td>
+                                            <td className="px-3 py-2">{user.email}</td>
+                                            <td className="px-3 py-2">
+                                                {role?.label ?? user.role}
+                                            </td>
+                                            <td className="px-3 py-2">
+                                                {role?.scope ?? 'Custom access'}
+                                            </td>
+                                            <td className="px-3 py-2">
+                                                {permissions.map(moduleLabel).join(', ')}
+                                            </td>
+                                            <td className="px-3 py-2">
+                                                {new Date(user.created_at).toLocaleString()}
+                                            </td>
+                                            <td className="px-3 py-2">
+                                                <div className="flex justify-end gap-2">
+                                                    <Button
+                                                        variant="outline"
+                                                        size="icon"
+                                                        onClick={() => openEditUser(user)}
+                                                    >
+                                                        <Pencil className="h-4 w-4" />
+                                                    </Button>
+
+                                                    <Button
+                                                        variant="destructive"
+                                                        size="icon"
+                                                        disabled={user.id === auth.user.id}
+                                                        onClick={() => openDeleteConfirmation(user)}
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
                             ) : (
                                 <tr>
                                     <td
-                                        colSpan={4}
+                                        colSpan={7}
                                         className="px-3 py-8 text-center text-muted-foreground"
                                     >
                                         No users found.
@@ -256,7 +374,7 @@ export default function Users({ users = [] }: { users: User[] }) {
 
                     <div className="mt-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                         <p className="text-sm text-muted-foreground">
-                            Showing {paginatedUsers.length} of {filteredUsers.length} users
+                            Showing {paginatedUsers.length} of {filteredUsers.length} RBAC assignments
                         </p>
 
                         <div className="flex items-center gap-2">
@@ -295,7 +413,7 @@ export default function Users({ users = [] }: { users: User[] }) {
                             <div>
                                 <h2 className="text-xl font-semibold">Add User</h2>
                                 <p className="text-sm text-muted-foreground">
-                                    Fill in the details to create a new user.
+                                    Create an account and assign its system role.
                                 </p>
                             </div>
 
@@ -309,42 +427,100 @@ export default function Users({ users = [] }: { users: User[] }) {
                         </div>
 
                         <form className="space-y-4" onSubmit={submitUser}>
-                            <Input
-                                placeholder="Name"
-                                value={data.name}
-                                onChange={(event) =>
-                                    setData('name', event.target.value)
-                                }
-                            />
+                            <div className="grid gap-2">
+                                <label className="text-sm font-medium" htmlFor="rbac-add-name">
+                                    Name
+                                </label>
+                                <Input
+                                    id="rbac-add-name"
+                                    placeholder="Enter full name"
+                                    value={data.name}
+                                    onChange={(event) =>
+                                        setData('name', event.target.value)
+                                    }
+                                />
+                            </div>
 
-                            <Input
-                                placeholder="Email"
-                                type="email"
-                                value={data.email}
-                                onChange={(event) =>
-                                    setData('email', event.target.value)
-                                }
-                            />
+                            <div className="grid gap-2">
+                                <label className="text-sm font-medium" htmlFor="rbac-add-email">
+                                    Email
+                                </label>
+                                <Input
+                                    id="rbac-add-email"
+                                    placeholder="Enter email address"
+                                    type="email"
+                                    value={data.email}
+                                    onChange={(event) =>
+                                        setData('email', event.target.value)
+                                    }
+                                />
+                            </div>
 
-                            <select
-                                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-                                value={data.role}
-                                onChange={(event) =>
-                                    setData('role', event.target.value)
-                                }
-                            >
-                                <option value="user">User</option>
-                                <option value="admin">Admin</option>
-                            </select>
+                            <div className="grid gap-2">
+                                <label className="text-sm font-medium" htmlFor="rbac-add-role">
+                                    Role
+                                </label>
+                                <select
+                                    id="rbac-add-role"
+                                    className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                                    value={data.role}
+                                    onChange={(event) => {
+                                        const role = event.target.value;
+                                        setData('role', role);
+                                        setData('permissions', defaultPermissionsForRole(role));
+                                    }}
+                                >
+                                    {Object.entries(roles).map(([key, role]) => (
+                                        <option key={key} value={key}>
+                                            {role.label} - {role.scope}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
 
-                            <Input
-                                placeholder="Password"
-                                type="password"
-                                value={data.password}
-                                onChange={(event) =>
-                                    setData('password', event.target.value)
-                                }
-                            />
+                            <div className="rounded-2xl border border-slate-200 p-4">
+                                <p className="font-medium">Module Permissions</p>
+                                <p className="mt-1 text-sm text-muted-foreground">
+                                    Select only the modules this account can access.
+                                </p>
+
+                                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                                    {moduleOptionsForRole(data.role).map((module) => (
+                                        <label
+                                            key={module.key}
+                                            className="flex items-center gap-2 text-sm"
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={data.permissions.includes(module.key)}
+                                                onChange={() =>
+                                                    togglePermission(
+                                                        module.key,
+                                                        data.permissions,
+                                                        (value) => setData('permissions', value),
+                                                    )
+                                                }
+                                            />
+                                            <span>{module.label}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="grid gap-2">
+                                <label className="text-sm font-medium" htmlFor="rbac-add-password">
+                                    Password
+                                </label>
+                                <Input
+                                    id="rbac-add-password"
+                                    placeholder="Enter password"
+                                    type="password"
+                                    value={data.password}
+                                    onChange={(event) =>
+                                        setData('password', event.target.value)
+                                    }
+                                />
+                            </div>
 
                             <div className="flex justify-end gap-2 pt-3">
                                 <Button
@@ -356,7 +532,7 @@ export default function Users({ users = [] }: { users: User[] }) {
                                 </Button>
 
                                 <Button disabled={processing}>
-                                    {processing ? 'Adding...' : 'Add User'}
+                                    {processing ? 'Adding...' : 'Create Assignment'}
                                 </Button>
                             </div>
                         </form>
@@ -371,7 +547,7 @@ export default function Users({ users = [] }: { users: User[] }) {
                             <div>
                                 <h2 className="text-xl font-semibold">Edit User</h2>
                                 <p className="text-sm text-muted-foreground">
-                                    Update user information.
+                                    Update the user account and assigned role.
                                 </p>
                             </div>
 
@@ -388,33 +564,89 @@ export default function Users({ users = [] }: { users: User[] }) {
                         </div>
 
                         <form className="space-y-4" onSubmit={updateUser}>
-                            <Input
-                                placeholder="Name"
-                                value={editData.name}
-                                onChange={(event) =>
-                                    setEditData('name', event.target.value)
-                                }
-                            />
+                            <div className="grid gap-2">
+                                <label className="text-sm font-medium" htmlFor="rbac-edit-name">
+                                    Name
+                                </label>
+                                <Input
+                                    id="rbac-edit-name"
+                                    placeholder="Enter full name"
+                                    value={editData.name}
+                                    onChange={(event) =>
+                                        setEditData('name', event.target.value)
+                                    }
+                                />
+                            </div>
 
-                            <Input
-                                placeholder="Email"
-                                type="email"
-                                value={editData.email}
-                                onChange={(event) =>
-                                    setEditData('email', event.target.value)
-                                }
-                            />
+                            <div className="grid gap-2">
+                                <label className="text-sm font-medium" htmlFor="rbac-edit-email">
+                                    Email
+                                </label>
+                                <Input
+                                    id="rbac-edit-email"
+                                    placeholder="Enter email address"
+                                    type="email"
+                                    value={editData.email}
+                                    onChange={(event) =>
+                                        setEditData('email', event.target.value)
+                                    }
+                                />
+                            </div>
 
-                            <select
-                                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-                                value={editData.role}
-                                onChange={(event) =>
-                                    setEditData('role', event.target.value)
-                                }
-                            >
-                                <option value="user">User</option>
-                                <option value="admin">Admin</option>
-                            </select>
+                            <div className="grid gap-2">
+                                <label className="text-sm font-medium" htmlFor="rbac-edit-role">
+                                    Role
+                                </label>
+                                <select
+                                    id="rbac-edit-role"
+                                    className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                                    value={editData.role}
+                                    onChange={(event) => {
+                                        const role = event.target.value;
+                                        setEditData('role', role);
+                                        setEditData('permissions', defaultPermissionsForRole(role));
+                                    }}
+                                >
+                                    {Object.entries(roles).map(([key, role]) => (
+                                        <option key={key} value={key}>
+                                            {role.label} - {role.scope}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="rounded-2xl border border-slate-200 p-4">
+                                <p className="font-medium">Module Permissions</p>
+                                <p className="mt-1 text-sm text-muted-foreground">
+                                    Select only the modules this account can access.
+                                </p>
+
+                                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                                    {moduleOptionsForRole(editData.role).map((module) => (
+                                        <label
+                                            key={module.key}
+                                            className="flex items-center gap-2 text-sm"
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={editData.permissions.includes(module.key)}
+                                                disabled={
+                                                    selectedUser.id === auth.user.id &&
+                                                    module.key === 'admin.rbac'
+                                                }
+                                                onChange={() =>
+                                                    togglePermission(
+                                                        module.key,
+                                                        editData.permissions,
+                                                        (value) => setEditData('permissions', value),
+                                                    )
+                                                }
+                                            />
+                                            <span>{module.label}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
 
                             <div className="flex justify-end gap-2 pt-3">
                                 <Button
@@ -429,7 +661,7 @@ export default function Users({ users = [] }: { users: User[] }) {
                                 </Button>
 
                                 <Button disabled={updating}>
-                                    {updating ? 'Updating...' : 'Update User'}
+                                    {updating ? 'Updating...' : 'Update Assignment'}
                                 </Button>
                             </div>
                         </form>
@@ -495,7 +727,7 @@ export default function Users({ users = [] }: { users: User[] }) {
                                 disabled={!deletePassword}
                                 onClick={confirmDelete}
                             >
-                                Delete User
+                                Delete Assignment
                             </Button>
                         </div>
                     </div>
@@ -504,11 +736,3 @@ export default function Users({ users = [] }: { users: User[] }) {
         </div>
     );
 }
-
-
-
-
-
-
-
-

@@ -16,7 +16,7 @@ class ReportController extends Controller
     public function index()
     {
         return Inertia::render('Admin/Reports', [
-            'reports' => Report::latest()->get(),
+            'reports' => Report::with('user:id,name')->latest()->get(),
             'latestForecast' => ForecastResult::latest('predicted_at')->first(),
             'latestDss' => DssResult::latest()->first(),
         ]);
@@ -26,13 +26,27 @@ class ReportController extends Controller
     {
         $forecast = ForecastResult::latest('predicted_at')->first();
         $dss = DssResult::latest()->first();
+        $latestProcessed = ProcessedRecord::query()
+            ->orderByDesc('year')
+            ->orderByDesc('month')
+            ->first();
 
         $report = Report::create([
             'user_id' => $request->user()->id,
             'title' => 'Renewable Energy Transition Report - '.now()->format('Y-m-d H:i'),
             'type' => 'analytics_forecast_dss',
             'summary' => [
-                'average_consumption' => round((float) ProcessedRecord::avg('consumption_kwh'), 2),
+                'analytics' => [
+                    'record_count' => ProcessedRecord::count(),
+                    'latest_period' => $latestProcessed
+                        ? $latestProcessed->year . '-' . str_pad((string) $latestProcessed->month, 2, '0', STR_PAD_LEFT)
+                        : null,
+                    'latest_consumption_kwh' => round((float) ($latestProcessed?->consumption_kwh ?? 0), 2),
+                    'average_consumption_kwh' => round((float) ProcessedRecord::avg('consumption_kwh'), 2),
+                    'highest_consumption_kwh' => round((float) ProcessedRecord::max('consumption_kwh'), 2),
+                    'average_peak_demand_kw' => round((float) ProcessedRecord::avg('peak_demand_kw'), 2),
+                    'average_solar_irradiance' => round((float) ProcessedRecord::avg('solar_irradiance'), 2),
+                ],
                 'latest_forecast' => $forecast,
                 'latest_dss' => $dss,
             ],
@@ -49,6 +63,7 @@ class ReportController extends Controller
 
     public function download(Report $report)
     {
+        $report->load('user:id,name');
         $html = view('reports.energy', ['report' => $report])->render();
         
         AuditLogger::log(

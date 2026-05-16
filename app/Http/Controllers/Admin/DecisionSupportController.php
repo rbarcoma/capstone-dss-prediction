@@ -8,6 +8,7 @@ use App\Models\ForecastResult;
 use App\Models\ProcessedRecord;
 use App\Support\AuditLogger;
 use App\Support\EnergyDss;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class DecisionSupportController extends Controller
@@ -15,12 +16,12 @@ class DecisionSupportController extends Controller
     public function index()
     {
         return Inertia::render('Admin/DecisionSupport', [
-            'latestDss' => DssResult::latest()->first(),
-            'history' => DssResult::latest()->take(20)->get(),
+            'latestDss' => DssResult::with('user:id,name')->latest()->first(),
+            'history' => DssResult::with('user:id,name')->latest()->take(20)->get(),
         ]);
     }
 
-    public function generate()
+    public function generate(Request $request)
     {
         $forecast = ForecastResult::latest('predicted_at')->first();
         if (! $forecast) {
@@ -36,6 +37,7 @@ class DecisionSupportController extends Controller
         DssResult::updateOrCreate([
             'forecast_result_id' => $forecast->id,
         ], [
+            'user_id' => $request->user()?->id,
             'demand_status' => $demand,
             'readiness_level' => $readiness,
             'recommendations' => $recommendations,

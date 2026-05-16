@@ -24,6 +24,7 @@ export default function AuditTrail({
     const [currentPage, setCurrentPage] = useState(1);
 
     const [itemsPerPage, setItemsPerPage] = useState(10);
+    const latestAuditTrailId = auditTrails[0]?.id;
 
     const filteredAuditTrails = useMemo(() => {
         return auditTrails.filter((item) => {
@@ -129,20 +130,27 @@ export default function AuditTrail({
 
                         <tbody>
                             {paginatedAuditTrails.length > 0 ? (
-                                paginatedAuditTrails.map((item) => (
-                                    <tr key={item.id} className="border-b">
-                                        <td className="px-3 py-3">{item.user_name}</td>
-                                        <td className="px-3 py-3">{item.module}</td>
-                                        <td className="px-3 py-3">{item.action}</td>
-                                        <td className="px-3 py-3">{item.description}</td>
-                                        <td className="px-3 py-3 capitalize">
-                                            {item.status}
-                                        </td>
-                                        <td className="px-3 py-3">
-                                            {new Date(item.created_at).toLocaleString()}
-                                        </td>
-                                    </tr>
-                                ))
+                                paginatedAuditTrails.map((item) => {
+                                    const isLatest = item.id === latestAuditTrailId;
+
+                                    return (
+                                        <tr
+                                            key={item.id}
+                                            className={`border-b ${isLatest ? 'bg-primary/5 font-bold' : ''}`}
+                                        >
+                                            <td className="px-3 py-3">{item.user_name}</td>
+                                            <td className="px-3 py-3">{item.module}</td>
+                                            <td className="px-3 py-3">{item.action}</td>
+                                            <td className="px-3 py-3">{item.description}</td>
+                                            <td className="px-3 py-3 capitalize">
+                                                {item.status}
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                {new Date(item.created_at).toLocaleString()}
+                                            </td>
+                                        </tr>
+                                    );
+                                })
                             ) : (
                                 <tr>
                                     <td
