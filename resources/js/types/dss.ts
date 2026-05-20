@@ -48,9 +48,15 @@ export type ForecastResult = {
 export type DssResult = {
     id: number;
     user_id?: number;
+    forecast_result_id?: number;
     user?: {
         id: number;
         name: string;
+    } | null;
+    forecast_result?: {
+        id: number;
+        year: number;
+        month: number;
     } | null;
     demand_status: string;
     readiness_level: string;
@@ -58,6 +64,7 @@ export type DssResult = {
     priority_actions: string[];
     basis?: Record<string, number>;
     created_at: string;
+    updated_at?: string;
 };
 
 export type Report = {

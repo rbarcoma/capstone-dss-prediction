@@ -12,7 +12,7 @@ export default function DataManagement({
     requiredColumns,
 }: {
     datasets: Dataset[];
-    requiredColumns: Record<string, string[]>;
+    requiredColumns: string[];
 }) {
     const { auth, flash } = usePage().props as any;
 
@@ -20,19 +20,18 @@ export default function DataManagement({
     const [openDeleteModal, setOpenDeleteModal] = useState(false);
     const [selectedDataset, setSelectedDataset] = useState<Dataset | null>(null);
     const [deletePassword, setDeletePassword] = useState('');
+    const [deleteError, setDeleteError] = useState('');
 
     const [search, setSearch] = useState('');
-    const [typeFilter, setTypeFilter] = useState('all');
     const [currentPage, setCurrentPage] = useState(1);
 
     const [itemsPerPage, setItemsPerPage] = useState(10);
+    const latestDatasetId = datasets[0]?.id;
 
     const { data, setData, post, processing, reset } = useForm<{
-        type: string;
         dataset: File | null;
         replace_existing: boolean;
     }>({
-        type: 'electricity',
         dataset: null,
         replace_existing: false,
     });
@@ -52,11 +51,9 @@ export default function DataManagement({
                 uploadedBy.includes(search.toLowerCase()) ||
                 uploadedAt.includes(search.toLowerCase());
 
-            const matchesType = typeFilter === 'all' || item.type === typeFilter;
-
-            return matchesSearch && matchesType;
+            return matchesSearch;
         });
-    }, [datasets, search, typeFilter]);
+    }, [datasets, search]);
 
     const totalPages = Math.ceil(filteredDatasets.length / itemsPerPage);
 
@@ -104,6 +101,7 @@ export default function DataManagement({
     const openDeleteConfirmation = (dataset: Dataset) => {
         setSelectedDataset(dataset);
         setDeletePassword('');
+        setDeleteError('');
         setOpenDeleteModal(true);
     };
 
@@ -118,6 +116,10 @@ export default function DataManagement({
                 setOpenDeleteModal(false);
                 setSelectedDataset(null);
                 setDeletePassword('');
+                setDeleteError('');
+            },
+            onError: (errors) => {
+                setDeleteError(errors.password ?? 'Unable to delete dataset.');
             },
         });
     };
@@ -171,19 +173,6 @@ export default function DataManagement({
 
                             <select
                                 className="rounded-md border bg-background px-3 py-2 text-sm"
-                                value={typeFilter}
-                                onChange={(event) => {
-                                    setTypeFilter(event.target.value);
-                                    setCurrentPage(1);
-                                }}
-                            >
-                                <option value="all">All Types</option>
-                                <option value="electricity">Electricity</option>
-                                <option value="climate">Climate</option>
-                            </select>
-
-                            <select
-                                className="rounded-md border bg-background px-3 py-2 text-sm"
                                 value={itemsPerPage}
                                 onChange={(event) => {
                                     setItemsPerPage(Number(event.target.value));
@@ -214,31 +203,42 @@ export default function DataManagement({
 
                         <tbody>
                             {paginatedDatasets.length > 0 ? (
-                                paginatedDatasets.map((item) => (
-                                    <tr key={item.id} className="border-b">
-                                        <td className="px-3 py-1">{item.original_name}</td>
-                                        <td className="px-3 py-1 capitalize">{item.type}</td>
-                                        <td className="px-3 py-1">
-                                            {item.user?.name ?? auth?.user?.name ?? 'Admin'}
-                                        </td>
-                                        <td className="px-3 py-1">
-                                            {new Date(item.created_at).toLocaleString()}
-                                        </td>
-                                        <td className="px-3 py-1">{item.status}</td>
-                                        <td className="px-3 py-1">{item.record_count}</td>
-                                        <td className="px-3 py-1">
-                                            <div className="flex justify-end">
-                                                <Button
-                                                    variant="destructive"
-                                                    size="icon"
-                                                    onClick={() => openDeleteConfirmation(item)}
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))
+                                paginatedDatasets.map((item) => {
+                                    const isLatest = item.id === latestDatasetId;
+
+                                    return (
+                                        <tr
+                                            key={item.id}
+                                            className={`border-b ${isLatest ? 'bg-primary/5 font-bold' : ''}`}
+                                        >
+                                            <td className="px-3 py-1">{item.original_name}</td>
+                                            <td className="px-3 py-1 capitalize">
+                                                {item.type === 'combined'
+                                                    ? 'Electricity + Climate'
+                                                    : item.type}
+                                            </td>
+                                            <td className="px-3 py-1">
+                                                {item.user?.name ?? auth?.user?.name ?? 'Admin'}
+                                            </td>
+                                            <td className="px-3 py-1">
+                                                {new Date(item.created_at).toLocaleString()}
+                                            </td>
+                                            <td className="px-3 py-1">{item.status}</td>
+                                            <td className="px-3 py-1">{item.record_count}</td>
+                                            <td className="px-3 py-1">
+                                                <div className="flex justify-end">
+                                                    <Button
+                                                        variant="destructive"
+                                                        size="icon"
+                                                        onClick={() => openDeleteConfirmation(item)}
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
                             ) : (
                                 <tr>
                                     <td
@@ -291,7 +291,7 @@ export default function DataManagement({
                             <div>
                                 <h2 className="text-xl font-semibold">Upload Dataset</h2>
                                 <p className="text-sm text-muted-foreground">
-                                    Upload electricity or climate CSV dataset.
+                                    Upload a daily or monthly CSV containing electricity and climate data.
                                 </p>
                             </div>
 
@@ -305,15 +305,6 @@ export default function DataManagement({
                         </div>
 
                         <form className="space-y-4" onSubmit={submitUpload}>
-                            <select
-                                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-                                value={data.type}
-                                onChange={(event) => setData('type', event.target.value)}
-                            >
-                                <option value="electricity">Electricity Consumption</option>
-                                <option value="climate">Climate</option>
-                            </select>
-
                             <Input
                                 type="file"
                                 accept=".csv,text/csv"
@@ -334,8 +325,11 @@ export default function DataManagement({
                             </label>
 
                             <p className="text-xs text-muted-foreground">
-                                Required columns:{' '}
-                                {requiredColumns[data.type]?.join(', ') || 'No required columns'}
+                                Required columns: {requiredColumns.join(', ') || 'No required columns'}
+                            </p>
+
+                            <p className="text-xs text-muted-foreground">
+                                Daily rows are automatically aggregated into monthly records for preprocessing and forecasting.
                             </p>
 
                             <div className="flex justify-end gap-2 pt-3">
@@ -370,6 +364,7 @@ export default function DataManagement({
                                     setOpenDeleteModal(false);
                                     setSelectedDataset(null);
                                     setDeletePassword('');
+                                    setDeleteError('');
                                 }}
                                 className="rounded-md px-2 py-1 text-xl text-gray-500 hover:bg-gray-100"
                             >
@@ -390,8 +385,14 @@ export default function DataManagement({
                                 type="password"
                                 placeholder="Enter your password"
                                 value={deletePassword}
-                                onChange={(event) => setDeletePassword(event.target.value)}
+                                onChange={(event) => {
+                                    setDeletePassword(event.target.value);
+                                    setDeleteError('');
+                                }}
                             />
+                            {deleteError && (
+                                <p className="mt-2 text-sm text-red-600">{deleteError}</p>
+                            )}
                         </div>
 
                         <div className="mt-6 flex justify-end gap-2">
@@ -402,6 +403,7 @@ export default function DataManagement({
                                     setOpenDeleteModal(false);
                                     setSelectedDataset(null);
                                     setDeletePassword('');
+                                    setDeleteError('');
                                 }}
                             >
                                 Cancel

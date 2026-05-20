@@ -12,6 +12,21 @@ import { router, usePage } from '@inertiajs/react';
 import { Info, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+const monthNames = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+];
+
 export default function DecisionSupport({
     latestDss,
     history = [],
@@ -22,16 +37,26 @@ export default function DecisionSupport({
     const { auth, flash } = usePage().props as any;
 
     const [search, setSearch] = useState('');
+    const [monthFilter, setMonthFilter] = useState('all');
     const [readinessFilter, setReadinessFilter] = useState('all');
     const [currentPage, setCurrentPage] = useState(1);
 
+    const [selectedDss, setSelectedDss] = useState<DssResult | null>(null);
     const [infoModal, setInfoModal] = useState<{
         title: string;
         content: string;
     } | null>(null);
 
-   const [itemsPerPage, setItemsPerPage] = useState(10);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
     const latestDssId = latestDss?.id;
+
+    const formatPeriod = (item?: DssResult) => {
+        if (!item?.forecast_result) {
+            return '-';
+        }
+
+        return `${item.forecast_result.year}-${String(item.forecast_result.month).padStart(2, '0')}`;
+    };
 
     const dssInfo = {
         demandStatus: {
@@ -48,23 +73,33 @@ export default function DecisionSupport({
 
     const filteredHistory = useMemo(() => {
         return history.filter((item) => {
+            const period = formatPeriod(item).toLowerCase();
+            const forecastMonth = item.forecast_result?.month;
+            const monthName = forecastMonth
+                ? monthNames[forecastMonth - 1]?.toLowerCase() ?? ''
+                : '';
             const demand = item.demand_status?.toLowerCase() ?? '';
             const readiness = item.readiness_level?.toLowerCase() ?? '';
             const generatedBy = item.user?.name?.toLowerCase() ?? auth?.user?.name?.toLowerCase() ?? '';
-            const generated = new Date(item.created_at).toLocaleString().toLowerCase();
+            const generated = new Date(item.updated_at ?? item.created_at).toLocaleString().toLowerCase();
 
             const matchesSearch =
+                period.includes(search.toLowerCase()) ||
+                monthName.includes(search.toLowerCase()) ||
                 demand.includes(search.toLowerCase()) ||
                 readiness.includes(search.toLowerCase()) ||
                 generatedBy.includes(search.toLowerCase()) ||
                 generated.includes(search.toLowerCase());
 
+            const matchesMonth =
+                monthFilter === 'all' || forecastMonth === Number(monthFilter);
+
             const matchesReadiness =
                 readinessFilter === 'all' || item.readiness_level === readinessFilter;
 
-            return matchesSearch && matchesReadiness;
+            return matchesSearch && matchesMonth && matchesReadiness;
         });
-    }, [history, search, readinessFilter]);
+    }, [history, search, monthFilter, readinessFilter]);
 
     const uniqueReadinessLevels = Array.from(
         new Set(history.map((item) => item.readiness_level).filter(Boolean)),
@@ -106,103 +141,6 @@ export default function DecisionSupport({
 
             <Card className="rounded-lg">
                 <CardHeader>
-                    <CardTitle>Latest Assessment</CardTitle>
-                </CardHeader>
-
-                <CardContent className="grid gap-6 md:grid-cols-2">
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <p className="text-sm text-muted-foreground">
-                                Demand Status
-                            </p>
-
-                            <button
-                                type="button"
-                                onClick={() => setInfoModal(dssInfo.demandStatus)}
-                                className="rounded-full text-muted-foreground hover:text-black"
-                            >
-                                <Info className="h-4 w-4" />
-                            </button>
-                        </div>
-
-                        <p className="text-xl font-semibold">
-                            {latestDss?.demand_status ?? 'No result'}
-                        </p>
-
-                        <p className="mt-2 text-sm text-muted-foreground">
-                            This shows whether the predicted electricity consumption is low,
-                            moderate, or high compared to the normal consumption level.
-                        </p>
-                    </div>
-
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <p className="text-sm text-muted-foreground">
-                                Readiness Level
-                            </p>
-
-                            <button
-                                type="button"
-                                onClick={() => setInfoModal(dssInfo.readinessLevel)}
-                                className="rounded-full text-muted-foreground hover:text-black"
-                            >
-                                <Info className="h-4 w-4" />
-                            </button>
-                        </div>
-
-                        <p className="text-xl font-semibold">
-                            {latestDss?.readiness_level ?? 'No result'}
-                        </p>
-
-                        <p className="mt-2 text-sm text-muted-foreground">
-                            This shows how prepared the area is for renewable energy
-                            transition based on solar potential and peak demand.
-                        </p>
-                    </div>
-
-                    <div>
-                        <p className="font-medium">Recommendations</p>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                            These are suggested plans that can help reduce electricity
-                            consumption, improve energy monitoring, or support renewable
-                            energy transition.
-                        </p>
-
-                        <ul className="mt-3 list-disc space-y-2 pl-5 text-sm">
-                            {latestDss?.recommendations?.map((item) => (
-                                <li key={item}>
-                                    {item} This recommendation helps the user understand what
-                                    action can be considered based on the current demand and
-                                    readiness result of the system.
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-
-                    <div>
-                        <p className="font-medium">Priority Actions</p>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                            These are the actions that should be prioritized first because
-                            they directly support decision-making and preparation for energy
-                            planning.
-                        </p>
-
-                        <ul className="mt-3 list-disc space-y-2 pl-5 text-sm">
-                            {latestDss?.priority_actions?.map((item) => (
-                                <li key={item}>
-                                    {item} This action should be prioritized because it can
-                                    guide administrators in monitoring consumption, comparing
-                                    forecast results, and preparing proper energy management
-                                    steps.
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                </CardContent>
-            </Card>
-
-            <Card className="rounded-lg">
-                <CardHeader>
                     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                         <CardTitle>DSS History Table</CardTitle>
 
@@ -220,6 +158,22 @@ export default function DecisionSupport({
                                     }}
                                 />
                             </div>
+
+                            <select
+                                className="rounded-md border bg-background px-3 py-2 text-sm"
+                                value={monthFilter}
+                                onChange={(event) => {
+                                    setMonthFilter(event.target.value);
+                                    setCurrentPage(1);
+                                }}
+                            >
+                                <option value="all">All Months</option>
+                                {monthNames.map((month, index) => (
+                                    <option key={month} value={index + 1}>
+                                        {month}
+                                    </option>
+                                ))}
+                            </select>
 
                             <select
                                 className="rounded-md border bg-background px-3 py-2 text-sm"
@@ -257,10 +211,12 @@ export default function DecisionSupport({
                     <table className="w-full text-sm">
                         <thead>
                             <tr className="border-b bg-muted/40 text-left">
+                                <th className="px-3 py-3 font-semibold">Period</th>
                                 <th className="px-3 py-3 font-semibold">Demand Status</th>
                                 <th className="px-3 py-3 font-semibold">Readiness Level</th>
                                 <th className="px-3 py-3 font-semibold">Generated By</th>
                                 <th className="px-3 py-3 font-semibold">Generated</th>
+                                <th className="px-3 py-3 text-right font-semibold">Action</th>
                             </tr>
                         </thead>
 
@@ -274,17 +230,32 @@ export default function DecisionSupport({
                                             key={item.id}
                                             className={`border-b ${isLatest ? 'bg-primary/5 font-bold' : ''}`}
                                         >
-                                            <td className="px-3 py-3">
+                                            <td className="px-3 py-2">
+                                                {formatPeriod(item)}
+                                            </td>
+                                            <td className="px-3 py-2">
                                                 {item.demand_status}
                                             </td>
-                                            <td className="px-3 py-3">
+                                            <td className="px-3 py-2">
                                                 {item.readiness_level}
                                             </td>
-                                            <td className="px-3 py-3">
+                                            <td className="px-3 py-2">
                                                 {item.user?.name ?? auth?.user?.name ?? 'Admin'}
                                             </td>
-                                            <td className="px-3 py-3">
-                                                {new Date(item.created_at).toLocaleString()}
+                                            <td className="px-3 py-2">
+                                                {new Date(item.updated_at ?? item.created_at).toLocaleString()}
+                                            </td>
+                                            <td className="px-3 py-2">
+                                                <div className="flex justify-end">
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => setSelectedDss(item)}
+                                                    >
+                                                        View
+                                                    </Button>
+                                                </div>
                                             </td>
                                         </tr>
                                     );
@@ -292,7 +263,7 @@ export default function DecisionSupport({
                             ) : (
                                 <tr>
                                     <td
-                                        colSpan={4}
+                                        colSpan={6}
                                         className="px-3 py-6 text-center text-muted-foreground"
                                     >
                                         No DSS history found.
@@ -333,6 +304,84 @@ export default function DecisionSupport({
                     </div>
                 </CardContent>
             </Card>
+
+            <Dialog open={!!selectedDss} onOpenChange={() => setSelectedDss(null)}>
+                <DialogContent className="max-w-6xl">
+                    <DialogHeader>
+                        <DialogTitle>Latest Assessment</DialogTitle>
+                    </DialogHeader>
+
+                    {selectedDss && (
+                        <div className="grid gap-4 md:grid-cols-2">
+                            <div>
+                                <p className="text-sm text-muted-foreground">Period</p>
+                                <p className="text-xl font-semibold">{formatPeriod(selectedDss)}</p>
+                            </div>
+
+                            <div>
+                                <p className="text-sm text-muted-foreground">Generated</p>
+                                <p className="text-xl font-semibold">
+                                    {new Date(selectedDss.updated_at ?? selectedDss.created_at).toLocaleString()}
+                                </p>
+                            </div>
+
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <p className="text-sm text-muted-foreground">Demand Status</p>
+                                    <button
+                                        type="button"
+                                        onClick={() => setInfoModal(dssInfo.demandStatus)}
+                                        className="rounded-full text-muted-foreground hover:text-black"
+                                    >
+                                        <Info className="h-4 w-4" />
+                                    </button>
+                                </div>
+                                <p className="text-xl font-semibold">{selectedDss.demand_status}</p>
+                            </div>
+
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <p className="text-sm text-muted-foreground">Readiness Level</p>
+                                    <button
+                                        type="button"
+                                        onClick={() => setInfoModal(dssInfo.readinessLevel)}
+                                        className="rounded-full text-muted-foreground hover:text-black"
+                                    >
+                                        <Info className="h-4 w-4" />
+                                    </button>
+                                </div>
+                                <p className="text-xl font-semibold">{selectedDss.readiness_level}</p>
+                            </div>
+
+                            <div>
+                                <p className="font-medium">Recommendations</p>
+                                <ul className="mt-2 list-disc space-y-2 pl-5 text-sm leading-relaxed">
+                                    {selectedDss.recommendations?.length ? (
+                                        selectedDss.recommendations.map((item) => (
+                                            <li key={item}>{item}</li>
+                                        ))
+                                    ) : (
+                                        <li className="text-muted-foreground">No recommendations yet.</li>
+                                    )}
+                                </ul>
+                            </div>
+
+                            <div>
+                                <p className="font-medium">Priority Actions</p>
+                                <ul className="mt-2 list-disc space-y-2 pl-5 text-sm leading-relaxed">
+                                    {selectedDss.priority_actions?.length ? (
+                                        selectedDss.priority_actions.map((item) => (
+                                            <li key={item}>{item}</li>
+                                        ))
+                                    ) : (
+                                        <li className="text-muted-foreground">No priority actions yet.</li>
+                                    )}
+                                </ul>
+                            </div>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
 
             <Dialog open={!!infoModal} onOpenChange={() => setInfoModal(null)}>
                 <DialogContent>

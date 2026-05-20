@@ -8,9 +8,9 @@ export function AppSidebarHeader({
     breadcrumbs?: BreadcrumbItemType[];
 }) {
     return (
-        <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-2 border-b border-slate-200/80 bg-white/90 px-6 backdrop-blur-md transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-5">
+        <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-2 border-b border-border bg-background/90 px-6 text-foreground backdrop-blur-md transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-5">
             <div className="flex items-center gap-3">
-                <SidebarTrigger className="-ml-1 rounded-xl hover:bg-emerald-50 hover:text-emerald-700" />
+                <SidebarTrigger className="-ml-1 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-950/50 dark:hover:text-emerald-300" />
                 <Breadcrumbs breadcrumbs={breadcrumbs} />
             </div>
         </header>

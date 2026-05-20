@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\DssResult;
 use App\Models\ForecastResult;
 use App\Models\ProcessedRecord;
 use App\Support\AuditLogger;
@@ -56,12 +55,14 @@ class ForecastingController extends Controller
             return back()->with('error', 'Invalid JSON output from Python prediction script.');
         }
 
+        $generatedAt = now();
+
         $forecast = ForecastResult::updateOrCreate([
             'year' => $data['year'],
             'month' => $data['month'],
         ], [
             'user_id' => $request->user()?->id,
-            'predicted_at' => now(),
+            'predicted_at' => $generatedAt,
             'predicted_consumption_kwh' => $data['predicted_consumption_kwh'],
             'previous_consumption_kwh' => $data['previous_consumption_kwh'] ?? null,
             'change_percent' => $data['change_percent'] ?? null,
@@ -71,7 +72,7 @@ class ForecastingController extends Controller
             'model_type' => $data['model_type'] ?? 'Random Forest',
         ]);
 
-        $this->generateDssResult($forecast);
+        $dss = EnergyDss::generateForForecast($forecast, $request->user()?->id, $generatedAt);
 
         AuditLogger::log(
             'Forecasting',
@@ -80,6 +81,12 @@ class ForecastingController extends Controller
                 $forecast->year . '-' .
                 str_pad((string) $forecast->month, 2, '0', STR_PAD_LEFT) .
                 ': ' . $forecast->predicted_consumption_kwh . ' kWh.'
+        );
+
+        AuditLogger::log(
+            'Decision Support',
+            'Auto Generate DSS Result',
+            'System generated DSS result: ' . $dss->demand_status . ' and ' . $dss->readiness_level . '.'
         );
 
         return back()->with('success', 'Next-month forecast and DSS recommendations saved.');
@@ -141,55 +148,5 @@ class ForecastingController extends Controller
             Storage::path('ml/qc_energy_model.pkl'),
             Storage::path('ml/metrics.json'),
         ]);
-    }
-
-    private function generateDssResult(ForecastResult $forecast): void
-    {
-        $latest = ProcessedRecord::query()
-            ->orderByDesc('year')
-            ->orderByDesc('month')
-            ->first();
-
-        $average = (float) ProcessedRecord::avg('consumption_kwh');
-
-        $demand = EnergyDss::classifyDemand(
-            (float) $forecast->predicted_consumption_kwh,
-            $average
-        );
-
-        $readiness = EnergyDss::readiness(
-            (float) ($latest?->solar_irradiance ?? 0),
-            (float) ($latest?->peak_demand_kw ?? 0),
-            (float) $forecast->predicted_consumption_kwh
-        );
-
-        [$recommendations, $actions] = EnergyDss::recommendations(
-            $forecast,
-            $latest,
-            $demand,
-            $readiness
-        );
-
-        DssResult::updateOrCreate([
-            'forecast_result_id' => $forecast->id,
-        ], [
-            'user_id' => auth()->id(),
-            'demand_status' => $demand,
-            'readiness_level' => $readiness,
-            'recommendations' => $recommendations,
-            'priority_actions' => $actions,
-            'basis' => [
-                'predicted_consumption_kwh' => (float) $forecast->predicted_consumption_kwh,
-                'average_consumption_kwh' => $average,
-                'peak_demand_kw' => (float) ($latest?->peak_demand_kw ?? 0),
-                'solar_irradiance' => (float) ($latest?->solar_irradiance ?? 0),
-            ],
-        ]);
-
-        AuditLogger::log(
-            'Decision Support',
-            'Auto Generate DSS Result',
-            'System generated DSS result: ' . $demand . ' and ' . $readiness . '.'
-        );
     }
 }

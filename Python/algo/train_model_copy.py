@@ -21,8 +21,6 @@ FEATURES = [
     "month_cos",
 ]
 
-CROSS_VALIDATION_FOLDS = 5
-
 
 
 
@@ -244,47 +242,6 @@ def evaluate(model, rows):
     }
 
 
-def average_metric(fold_metrics, key):
-    values = [metrics[key] for metrics in fold_metrics]
-    return round(sum(values) / len(values), 4)
-
-
-def cross_validate(rows, fold_count=CROSS_VALIDATION_FOLDS):
-    minimum_training_rows = max(3, len(rows) // (fold_count + 1))
-    remaining_rows = len(rows) - minimum_training_rows
-    fold_count = min(fold_count, remaining_rows)
-    validation_size = max(1, remaining_rows // fold_count)
-    fold_metrics = []
-
-    for index in range(fold_count):
-        train_end = minimum_training_rows + (index * validation_size)
-        validation_end = len(rows) if index == fold_count - 1 else train_end + validation_size
-        training_rows = rows[:train_end]
-        validation_rows = rows[train_end:validation_end]
-
-        if not validation_rows:
-            continue
-
-        model = train_model(training_rows)
-        metrics = evaluate(model, validation_rows)
-        fold_metrics.append({
-            "fold": index + 1,
-            "training_rows": len(training_rows),
-            "validation_rows": len(validation_rows),
-            "mae": metrics["mae"],
-            "rmse": metrics["rmse"],
-            "r2_score": metrics["r2_score"],
-        })
-
-    return {
-        "folds": len(fold_metrics),
-        "average_mae": average_metric(fold_metrics, "mae"),
-        "average_rmse": average_metric(fold_metrics, "rmse"),
-        "average_r2_score": average_metric(fold_metrics, "r2_score"),
-        "fold_metrics": fold_metrics,
-    }
-
-
 
 
 def period_label(row):
@@ -299,65 +256,52 @@ def main():
     metrics_path = Path(sys.argv[3]) if len(sys.argv) > 3 else default_metrics_path()
 
 
-    log("Training machine learning model...")
+    log("Starting model training...")
     log(f"Dataset: {dataset_path}")
     log(f"Model output: {model_path}")
     log(f"Metrics output: {metrics_path}")
     log("")
 
 
+    log("Step 1/6: Loading dataset")
     rows = read_rows(dataset_path)
     if len(rows) < 6:
         raise ValueError("At least 6 processed rows are required to train the model.")
 
 
     log(f"Loaded {len(rows)} rows from {period_label(rows[0])} to {period_label(rows[-1])}.")
+    log("")
+
+
+    log("Step 2/6: Preparing training features")
     log(f"Using {len(FEATURES)} features: {', '.join(FEATURES)}")
+    log("Derived lag, trend, and seasonal month features are ready.")
+    log("")
 
 
+    log("Step 3/6: Splitting dataset")
     train_rows, test_rows = split_train_test(rows)
-    log(f"Model validation uses {len(train_rows)} training rows and {len(test_rows)} holdout test rows.")
+    log(f"Training rows: {len(train_rows)} ({period_label(train_rows[0])} to {period_label(train_rows[-1])})")
+    log(f"Testing rows: {len(test_rows)} ({period_label(test_rows[0])} to {period_label(test_rows[-1])})")
     log("")
 
 
-    log(f"Running {CROSS_VALIDATION_FOLDS}-fold rolling cross-validation on the training rows...")
-    cross_validation = cross_validate(train_rows)
-    for fold in cross_validation["fold_metrics"]:
-        log(
-            f"Fold {fold['fold']}: "
-            f"{fold['training_rows']} training rows, "
-            f"{fold['validation_rows']} validation rows, "
-            f"MAE={fold['mae']}, RMSE={fold['rmse']}, R2={fold['r2_score']}"
-        )
-    log(
-        "Cross-validation averages: "
-        f"MAE={cross_validation['average_mae']}, "
-        f"RMSE={cross_validation['average_rmse']}, "
-        f"R2={cross_validation['average_r2_score']}"
-    )
+    log("Step 4/6: Training Linear Regression model")
+    model = train_model(train_rows)
+    log("Standardized feature values, built the regression matrix, and solved the coefficients.")
+    log(f"Learned {len(model['coefficients'])} coefficients including the intercept.")
     log("")
 
 
-    validation_model = train_model(train_rows)
-    metrics = evaluate(validation_model, test_rows)
-    log("Holdout test evaluation:")
+    log("Step 5/6: Evaluating model on test data")
+    metrics = evaluate(model, test_rows)
     log(f"MAE: {metrics['mae']}")
     log(f"RMSE: {metrics['rmse']}")
     log(f"R2 score: {metrics['r2_score']}")
     log("")
 
 
-    metrics["cross_validation"] = cross_validation
-    metrics["training_rows"] = len(train_rows)
-    metrics["testing_rows"] = len(test_rows)
-    metrics["total_rows"] = len(rows)
-    metrics["training_strategy"] = "rolling_cross_validation_then_final_full_dataset_training"
-
-
-    model = train_model(rows)
-    log(f"Final production model trained on all {len(rows)} rows.")
-
-
+    log("Step 6/6: Saving model and metrics")
     model_path.parent.mkdir(parents=True, exist_ok=True)
     metrics_path.parent.mkdir(parents=True, exist_ok=True)
 

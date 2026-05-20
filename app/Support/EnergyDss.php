@@ -2,8 +2,10 @@
 
 namespace App\Support;
 
+use App\Models\DssResult;
 use App\Models\ForecastResult;
 use App\Models\ProcessedRecord;
+use Carbon\CarbonInterface;
 
 class EnergyDss
 {
@@ -76,5 +78,57 @@ class EnergyDss
         }
 
         return [$items, $actions];
+    }
+
+    public static function generateForForecast(ForecastResult $forecast, ?int $userId = null, ?CarbonInterface $generatedAt = null): DssResult
+    {
+        $latest = ProcessedRecord::query()
+            ->orderByDesc('year')
+            ->orderByDesc('month')
+            ->first();
+
+        $average = (float) ProcessedRecord::avg('consumption_kwh');
+
+        $demand = self::classifyDemand(
+            (float) $forecast->predicted_consumption_kwh,
+            $average
+        );
+
+        $readiness = self::readiness(
+            (float) ($latest?->solar_irradiance ?? 0),
+            (float) ($latest?->peak_demand_kw ?? 0),
+            (float) $forecast->predicted_consumption_kwh
+        );
+
+        [$recommendations, $actions] = self::recommendations(
+            $forecast,
+            $latest,
+            $demand,
+            $readiness
+        );
+
+        $dss = DssResult::updateOrCreate([
+            'forecast_result_id' => $forecast->id,
+        ], [
+            'user_id' => $userId,
+            'demand_status' => $demand,
+            'readiness_level' => $readiness,
+            'recommendations' => $recommendations,
+            'priority_actions' => $actions,
+            'basis' => [
+                'predicted_consumption_kwh' => (float) $forecast->predicted_consumption_kwh,
+                'average_consumption_kwh' => $average,
+                'peak_demand_kw' => (float) ($latest?->peak_demand_kw ?? 0),
+                'solar_irradiance' => (float) ($latest?->solar_irradiance ?? 0),
+            ],
+        ]);
+
+        $generatedAt ??= now();
+
+        $dss->forceFill([
+            'updated_at' => $generatedAt,
+        ])->saveQuietly();
+
+        return $dss->refresh();
     }
 }

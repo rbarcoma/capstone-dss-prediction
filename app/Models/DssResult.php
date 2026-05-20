@@ -30,4 +30,9 @@ class DssResult extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function forecastResult(): BelongsTo
+    {
+        return $this->belongsTo(ForecastResult::class);
+    }
 }

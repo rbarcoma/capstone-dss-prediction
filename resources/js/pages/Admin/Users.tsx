@@ -33,6 +33,7 @@ export default function Users({
 
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [deletePassword, setDeletePassword] = useState('');
+    const [deleteError, setDeleteError] = useState('');
 
     const [search, setSearch] = useState('');
     const [roleFilter, setRoleFilter] = useState('all');
@@ -171,6 +172,7 @@ export default function Users({
     const openDeleteConfirmation = (user: User) => {
         setSelectedUser(user);
         setDeletePassword('');
+        setDeleteError('');
         setOpenDeleteModal(true);
     };
 
@@ -185,6 +187,10 @@ export default function Users({
                 setOpenDeleteModal(false);
                 setSelectedUser(null);
                 setDeletePassword('');
+                setDeleteError('');
+            },
+            onError: (errors) => {
+                setDeleteError(errors.password ?? 'Unable to delete user.');
             },
         });
     };
@@ -193,7 +199,7 @@ export default function Users({
         <div className="space-y-6 p-6">
             <div className="flex items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-semibold">User Management</h1>
+                    <h1 className="text-2xl font-semibold">RBAC</h1>
                     <p className="text-sm text-muted-foreground">
                         Role-based access control for system users and permissions.
                     </p>
@@ -247,7 +253,7 @@ export default function Users({
             <Card className="rounded-lg">
                 <CardHeader>
                     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                        <CardTitle>User Management Table</CardTitle>
+                        <CardTitle>RBAC Table</CardTitle>
 
                         <div className="flex flex-col gap-2 md:flex-row">
                             <Input
@@ -411,7 +417,7 @@ export default function Users({
                     <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-lg">
                         <div className="mb-5 flex items-center justify-between">
                             <div>
-                                <h2 className="text-xl font-semibold">Add User</h2>
+                                <h2 className="text-xl font-semibold">Add RBAC User</h2>
                                 <p className="text-sm text-muted-foreground">
                                     Create an account and assign its system role.
                                 </p>
@@ -683,6 +689,7 @@ export default function Users({
                                     setOpenDeleteModal(false);
                                     setSelectedUser(null);
                                     setDeletePassword('');
+                                    setDeleteError('');
                                 }}
                                 className="rounded-md px-2 py-1 text-xl text-gray-500 hover:bg-gray-100"
                             >
@@ -703,10 +710,14 @@ export default function Users({
                                 type="password"
                                 placeholder="Enter your password"
                                 value={deletePassword}
-                                onChange={(event) =>
-                                    setDeletePassword(event.target.value)
-                                }
+                                onChange={(event) => {
+                                    setDeletePassword(event.target.value);
+                                    setDeleteError('');
+                                }}
                             />
+                            {deleteError && (
+                                <p className="mt-2 text-sm text-red-600">{deleteError}</p>
+                            )}
                         </div>
 
                         <div className="mt-6 flex justify-end gap-2">
@@ -717,6 +728,7 @@ export default function Users({
                                     setOpenDeleteModal(false);
                                     setSelectedUser(null);
                                     setDeletePassword('');
+                                    setDeleteError('');
                                 }}
                             >
                                 Cancel

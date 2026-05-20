@@ -37,6 +37,13 @@ function formatChartData(data: any[]) {
 
 function AnalyticsChart({ data }: { data: any[] }) {
     const chartData = formatChartData(data);
+    const axisColor = 'var(--muted-foreground)';
+    const borderColor = 'var(--border)';
+    const tooltipStyle = {
+        backgroundColor: 'var(--popover)',
+        border: '1px solid var(--border)',
+        color: 'var(--popover-foreground)',
+    };
 
     return (
         <div className="h-[300px] w-full">
@@ -50,17 +57,21 @@ function AnalyticsChart({ data }: { data: any[] }) {
                         bottom: 20,
                     }}
                 >
-                    <CartesianGrid strokeDasharray="3 3" />
+                    <CartesianGrid strokeDasharray="3 3" stroke={borderColor} />
                     <XAxis
                         dataKey="label"
-                        tick={{ fontSize: 12 }}
+                        tick={{ fontSize: 12, fill: axisColor }}
                         tickMargin={10}
+                        axisLine={{ stroke: borderColor }}
+                        tickLine={{ stroke: borderColor }}
                     />
                     <YAxis
-                        tick={{ fontSize: 12 }}
+                        tick={{ fontSize: 12, fill: axisColor }}
                         tickMargin={10}
+                        axisLine={{ stroke: borderColor }}
+                        tickLine={{ stroke: borderColor }}
                     />
-                    <Tooltip />
+                    <Tooltip contentStyle={tooltipStyle} />
                     <Line
                         type="monotone"
                         dataKey="value"

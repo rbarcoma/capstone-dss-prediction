@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Support\AuditLogger;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -114,9 +115,19 @@ class UserManagementController extends Controller
         return back()->with('success', 'User updated.');
     }
 
-    public function destroy(User $user)
+    public function destroy(Request $request, User $user)
     {
         abort_if($user->id === auth()->id(), 422, 'You cannot delete your own account.');
+
+        $data = $request->validate([
+            'password' => ['required', 'string'],
+        ]);
+
+        if (! Hash::check($data['password'], $request->user()->password)) {
+            throw ValidationException::withMessages([
+                'password' => 'The password is incorrect.',
+            ]);
+        }
 
         $email = $user->email;
 

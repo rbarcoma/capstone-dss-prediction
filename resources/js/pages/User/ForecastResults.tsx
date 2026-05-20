@@ -6,6 +6,21 @@ import type { ForecastResult } from '@/types';
 import { Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+const monthNames = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+];
+
 export default function ForecastResults({
     latestForecast,
     forecastHistory = [],
@@ -14,7 +29,7 @@ export default function ForecastResults({
     forecastHistory: ForecastResult[];
 }) {
     const [search, setSearch] = useState('');
-    const [modelFilter, setModelFilter] = useState('all');
+    const [monthFilter, setMonthFilter] = useState('all');
     const [itemsPerPage, setItemsPerPage] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
     const latestForecastId = latestForecast?.id;
@@ -33,6 +48,7 @@ export default function ForecastResults({
     const filteredForecasts = useMemo(() => {
         return forecastHistory.filter((item) => {
             const period = `${item.year}-${String(item.month).padStart(2, '0')}`;
+            const monthName = monthNames[item.month - 1]?.toLowerCase() ?? '';
             const model = item.model_type?.toLowerCase() ?? '';
             const predictedBy = item.user?.name?.toLowerCase() ?? 'admin';
             const predictedAt = formatPredictionDate(
@@ -41,21 +57,18 @@ export default function ForecastResults({
 
             const matchesSearch =
                 period.includes(search.toLowerCase()) ||
+                monthName.includes(search.toLowerCase()) ||
                 model.includes(search.toLowerCase()) ||
                 predictedBy.includes(search.toLowerCase()) ||
                 predictedAt.includes(search.toLowerCase()) ||
                 String(item.predicted_consumption_kwh).includes(search);
 
-            const matchesModel =
-                modelFilter === 'all' || item.model_type === modelFilter;
+            const matchesMonth =
+                monthFilter === 'all' || item.month === Number(monthFilter);
 
-            return matchesSearch && matchesModel;
+            return matchesSearch && matchesMonth;
         });
-    }, [forecastHistory, search, modelFilter]);
-
-    const uniqueModels = Array.from(
-        new Set(forecastHistory.map((item) => item.model_type).filter(Boolean)),
-    );
+    }, [forecastHistory, search, monthFilter]);
 
     const totalPages = Math.ceil(filteredForecasts.length / itemsPerPage);
 
@@ -109,16 +122,16 @@ export default function ForecastResults({
 
                             <select
                                 className="rounded-md border bg-background px-3 py-2 text-sm"
-                                value={modelFilter}
+                                value={monthFilter}
                                 onChange={(event) => {
-                                    setModelFilter(event.target.value);
+                                    setMonthFilter(event.target.value);
                                     setCurrentPage(1);
                                 }}
                             >
-                                <option value="all">All Models</option>
-                                {uniqueModels.map((model) => (
-                                    <option key={model} value={model}>
-                                        {model}
+                                <option value="all">All Months</option>
+                                {monthNames.map((month, index) => (
+                                    <option key={month} value={index + 1}>
+                                        {month}
                                     </option>
                                 ))}
                             </select>
@@ -143,12 +156,12 @@ export default function ForecastResults({
                     <table className="w-full text-sm">
                         <thead>
                             <tr className="border-b bg-muted/80 text-left">
-                                <th className="px-3 py-2 font-semibold">Predicted At</th>
-                                <th className="px-3 py-2 font-semibold">Predicted By</th>
                                 <th className="px-3 py-2 font-semibold">Period</th>
                                 <th className="px-3 py-2 font-semibold">Prediction</th>
                                 <th className="px-3 py-2 font-semibold">Change</th>
                                 <th className="px-3 py-2 font-semibold">Model</th>
+                                <th className="px-3 py-2 font-semibold">Predicted At</th>
+                                <th className="px-3 py-2 font-semibold">Predicted By</th>
                             </tr>
                         </thead>
 
@@ -162,23 +175,23 @@ export default function ForecastResults({
                                             key={item.id}
                                             className={`border-b ${isLatest ? 'bg-primary/5 font-bold' : ''}`}
                                         >
-                                            <td className="px-3 py-2">
-                                                {formatPredictionDate(item.predicted_at ?? item.created_at)}
-                                            </td>
-                                            <td className="px-3 py-2">
-                                                {item.user?.name ?? 'Admin'}
-                                            </td>
-                                            <td className="px-3 py-2">
+                                            <td className="px-3 py-3">
                                                 {item.year}-{String(item.month).padStart(2, '0')}
                                             </td>
-                                            <td className="px-3 py-2">
+                                            <td className="px-3 py-3">
                                                 {item.predicted_consumption_kwh} kWh
                                             </td>
-                                            <td className="px-3 py-2">
+                                            <td className="px-3 py-3">
                                                 {item.change_percent ?? 0}%
                                             </td>
-                                            <td className="px-3 py-2">
+                                            <td className="px-3 py-3">
                                                 {item.model_type}
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                {formatPredictionDate(item.predicted_at ?? item.created_at)}
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                {item.user?.name ?? 'Admin'}
                                             </td>
                                         </tr>
                                     );

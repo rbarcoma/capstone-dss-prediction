@@ -3,10 +3,16 @@
     $analytics = data_get($summary, 'analytics', []);
     $forecast = data_get($summary, 'latest_forecast', []);
     $dss = data_get($summary, 'latest_dss', []);
+    $datasetProcessing = data_get($summary, 'dataset_processing', []);
+    $forecastAccuracy = data_get($summary, 'forecast_accuracy', []);
+    $predictionExplanation = data_get($summary, 'prediction_explanation', []);
+    $dssReasoning = data_get($summary, 'dss_reasoning', []);
+    $statuses = data_get($summary, 'statuses', []);
 
     $averageConsumption = data_get($analytics, 'average_consumption_kwh', data_get($summary, 'average_consumption', 0));
     $recommendations = data_get($dss, 'recommendations', []);
     $priorityActions = data_get($dss, 'priority_actions', []);
+    $features = data_get($predictionExplanation, 'features', []);
 
     $period = data_get($forecast, 'year') && data_get($forecast, 'month')
         ? data_get($forecast, 'year') . '-' . str_pad((string) data_get($forecast, 'month'), 2, '0', STR_PAD_LEFT)
@@ -42,6 +48,9 @@
         ul { margin: 10px 0 0; padding-left: 20px; }
         li { margin: 8px 0; line-height: 1.5; }
         .two { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+        .three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+        .status { display: inline-block; border-radius: 999px; background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; padding: 6px 10px; font-size: 13px; font-weight: 700; margin: 4px 6px 4px 0; }
+        .formula { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; font-family: Consolas, monospace; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
         @media print {
             body { background: #ffffff; }
             .page { margin: 0; max-width: none; border: 0; border-radius: 0; }
@@ -74,6 +83,46 @@
             This report summarizes electricity consumption analytics, machine learning forecasting,
             and decision support recommendations for renewable energy planning.
         </p>
+
+        <section class="section">
+            <h2>Report Basis</h2>
+            <p class="muted">
+                {{ data_get($summary, 'report_basis', 'This report is based on analytics, forecasting, and DSS records available when the report was generated.') }}
+            </p>
+            <div>
+                <span class="status">Data: {{ data_get($statuses, 'data_status', 'Pending') }}</span>
+                <span class="status">Forecast: {{ data_get($statuses, 'forecast_status', 'Pending') }}</span>
+                <span class="status">DSS: {{ data_get($statuses, 'dss_status', 'Pending') }}</span>
+                <span class="status">Model: {{ data_get($statuses, 'model_used', data_get($forecast, 'model_type', 'No model')) }}</span>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>Dataset Processing Summary</h2>
+            <div class="grid">
+                <div class="metric">
+                    <span>Uploaded Dataset</span>
+                    <strong>{{ data_get($datasetProcessing, 'uploaded_dataset', 'No dataset') }}</strong>
+                </div>
+                <div class="metric">
+                    <span>Raw Daily Records</span>
+                    <strong>{{ number_format((int) data_get($datasetProcessing, 'raw_daily_records', 0)) }}</strong>
+                </div>
+                <div class="metric">
+                    <span>Monthly Records</span>
+                    <strong>{{ number_format((int) data_get($datasetProcessing, 'monthly_records_generated', 0)) }}</strong>
+                </div>
+                <div class="metric">
+                    <span>Preprocessing Status</span>
+                    <strong>{{ data_get($datasetProcessing, 'preprocessing_status', 'Pending') }}</strong>
+                </div>
+            </div>
+            <p class="muted">
+                Processed records: {{ number_format((int) data_get($datasetProcessing, 'processed_records', data_get($analytics, 'record_count', 0))) }}.
+                Latest processed period: {{ data_get($datasetProcessing, 'latest_processed_period', data_get($analytics, 'latest_period', 'No processed data')) }}.
+                Uploaded by: {{ data_get($datasetProcessing, 'uploaded_by', 'Admin') }}.
+            </p>
+        </section>
 
         <section class="section">
             <h2>Analytics Summary</h2>
@@ -111,7 +160,9 @@
                         <th>Previous Consumption</th>
                         <th>Change</th>
                         <th>Model</th>
+                        <th>MAE</th>
                         <th>RMSE</th>
+                        <th>R2 Score</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -121,10 +172,44 @@
                         <td>{{ number_format((float) data_get($forecast, 'previous_consumption_kwh', 0), 2) }} kWh</td>
                         <td>{{ number_format((float) data_get($forecast, 'change_percent', 0), 2) }}%</td>
                         <td>{{ data_get($forecast, 'model_type', 'No model') }}</td>
+                        <td>{{ number_format((float) data_get($forecast, 'mae', data_get($forecastAccuracy, 'mae', 0)), 4) }}</td>
                         <td>{{ number_format((float) data_get($forecast, 'rmse', 0), 4) }}</td>
+                        <td>{{ number_format((float) data_get($forecast, 'r2_score', data_get($forecastAccuracy, 'r2_score', 0)), 4) }}</td>
                     </tr>
                 </tbody>
             </table>
+        </section>
+
+        <section class="section">
+            <h2>Model Accuracy</h2>
+            <div class="three">
+                <div class="metric">
+                    <span>MAE</span>
+                    <strong>{{ number_format((float) data_get($forecastAccuracy, 'mae', data_get($forecast, 'mae', 0)), 4) }}</strong>
+                </div>
+                <div class="metric">
+                    <span>RMSE</span>
+                    <strong>{{ number_format((float) data_get($forecastAccuracy, 'rmse', data_get($forecast, 'rmse', 0)), 4) }}</strong>
+                </div>
+                <div class="metric">
+                    <span>R2 Score</span>
+                    <strong>{{ number_format((float) data_get($forecastAccuracy, 'r2_score', data_get($forecast, 'r2_score', 0)), 4) }}</strong>
+                </div>
+            </div>
+            <p class="muted">{{ data_get($forecastAccuracy, 'interpretation', 'Model accuracy interpretation is unavailable.') }}</p>
+        </section>
+
+        <section class="section">
+            <h2>Prediction Explanation</h2>
+            <p class="muted">
+                {{ data_get($predictionExplanation, 'description', 'The system uses the trained model and latest processed monthly features to generate the next-month prediction.') }}
+            </p>
+            <div class="formula">
+                predicted_consumption = intercept + b1(year) + b2(month) + b3(temperature) + b4(humidity) + b5(rainfall) + b6(solar_irradiance) + b7(peak_demand_kw) + b8(lag_1) + b9(lag_2) + b10(trend) + b11(month_sin) + b12(month_cos)
+            </div>
+            @if (count($features) > 0)
+                <p class="muted">Features used: {{ implode(', ', $features) }}.</p>
+            @endif
         </section>
 
         <section class="section">
@@ -137,6 +222,16 @@
                 <div class="metric">
                     <span>Readiness Level</span>
                     <strong>{{ data_get($dss, 'readiness_level', 'No readiness assessment') }}</strong>
+                </div>
+            </div>
+            <div class="two" style="margin-top: 18px;">
+                <div>
+                    <h2>Demand Reasoning</h2>
+                    <p class="muted">{{ data_get($dssReasoning, 'demand_reason', 'Demand reasoning is unavailable.') }}</p>
+                </div>
+                <div>
+                    <h2>Readiness Reasoning</h2>
+                    <p class="muted">{{ data_get($dssReasoning, 'readiness_reason', 'Readiness reasoning is unavailable.') }}</p>
                 </div>
             </div>
         </section>

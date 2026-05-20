@@ -29,6 +29,13 @@ function formatChartData(data: any[]) {
 
 function DashboardChart({ data }: { data: any[] }) {
     const chartData = formatChartData(data);
+    const axisColor = 'var(--muted-foreground)';
+    const borderColor = 'var(--border)';
+    const tooltipStyle = {
+        backgroundColor: 'var(--popover)',
+        border: '1px solid var(--border)',
+        color: 'var(--popover-foreground)',
+    };
 
     return (
         <div className="h-[280px] w-full">
@@ -37,10 +44,21 @@ function DashboardChart({ data }: { data: any[] }) {
                     data={chartData}
                     margin={{ top: 20, right: 30, left: 10, bottom: 20 }}
                 >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="label" tick={{ fontSize: 12 }} tickMargin={10} />
-                    <YAxis tick={{ fontSize: 12 }} tickMargin={10} />
-                    <Tooltip />
+                    <CartesianGrid strokeDasharray="3 3" stroke={borderColor} />
+                    <XAxis
+                        dataKey="label"
+                        tick={{ fontSize: 12, fill: axisColor }}
+                        tickMargin={10}
+                        axisLine={{ stroke: borderColor }}
+                        tickLine={{ stroke: borderColor }}
+                    />
+                    <YAxis
+                        tick={{ fontSize: 12, fill: axisColor }}
+                        tickMargin={10}
+                        axisLine={{ stroke: borderColor }}
+                        tickLine={{ stroke: borderColor }}
+                    />
+                    <Tooltip contentStyle={tooltipStyle} />
                     <Line
                         type="monotone"
                         dataKey="value"

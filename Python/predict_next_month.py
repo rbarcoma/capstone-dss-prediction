@@ -12,12 +12,36 @@ from pathlib import Path
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = SCRIPT_DIR.parent
+STORAGE_ML_DIR = PROJECT_ROOT / "storage" / "app" / "private" / "ml"
 
 
 
 
 def default_path(filename):
     return SCRIPT_DIR / filename
+
+
+def default_dataset_path():
+    candidates = [
+        STORAGE_ML_DIR / "processed_dataset.csv",
+        SCRIPT_DIR / "qc_final_merged_dataset.csv",
+        SCRIPT_DIR / "sample-data" / "qc_final_merged_dataset.csv",
+    ]
+
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+
+    return candidates[0]
+
+
+def default_model_path():
+    return SCRIPT_DIR / "qc_energy_model_final.pkl"
+
+
+def default_metrics_path():
+    return SCRIPT_DIR / "generated_metrics.json"
 
 
 
@@ -174,9 +198,9 @@ def forecast_until_period(model, rows, target_year, target_month):
 
 
 def main():
-    dataset_path = Path(sys.argv[1]) if len(sys.argv) > 1 else default_path("qc_final_merged_dataset.csv")
-    model_path = Path(sys.argv[2]) if len(sys.argv) > 2 else default_path("qc_energy_model_final.pkl")
-    metrics_path = Path(sys.argv[3]) if len(sys.argv) > 3 else default_path("metrics.json")
+    dataset_path = Path(sys.argv[1]) if len(sys.argv) > 1 else default_dataset_path()
+    model_path = Path(sys.argv[2]) if len(sys.argv) > 2 else default_model_path()
+    metrics_path = Path(sys.argv[3]) if len(sys.argv) > 3 else default_metrics_path()
     train_script_path = default_path("train_model.py")
 
 
@@ -186,6 +210,8 @@ def main():
 
 
     if not os.path.exists(model_path):
+        model_path.parent.mkdir(parents=True, exist_ok=True)
+        metrics_path.parent.mkdir(parents=True, exist_ok=True)
         subprocess.run(
             [sys.executable, train_script_path, dataset_path, model_path, metrics_path],
             check=True,
@@ -198,6 +224,8 @@ def main():
         with open(model_path, "rb") as model_file:
             model = pickle.load(model_file)
     except Exception:
+        model_path.parent.mkdir(parents=True, exist_ok=True)
+        metrics_path.parent.mkdir(parents=True, exist_ok=True)
         subprocess.run(
             [sys.executable, train_script_path, dataset_path, model_path, metrics_path],
             check=True,

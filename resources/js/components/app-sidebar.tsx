@@ -85,7 +85,7 @@ const adminNavItems: NavItem[] = [
         permission: 'admin.audit_trail',
     },
         {
-            title: 'User Management',
+            title: 'RBAC',
             href: '/admin/users',
             icon: Users,
             permission: 'admin.rbac',
@@ -133,7 +133,7 @@ export function AppSidebar() {
                             <SidebarMenuButton
                                 size="lg"
                                 asChild
-                                className="h-14 rounded-2xl px-2 hover:bg-emerald-50"
+                                className="h-14 rounded-2xl px-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
                             >
                                 <Link href={homeHref} prefetch>
                                     <AppLogo />
