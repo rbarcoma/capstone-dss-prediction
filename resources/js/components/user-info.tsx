@@ -13,9 +13,9 @@ export function UserInfo({
 
     return (
         <>
-            <Avatar className="h-8 w-8 overflow-hidden rounded-full">
+            <Avatar className="h-9 w-9 overflow-hidden rounded-full">
                 <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg bg-neutral-200 text-black dark:bg-neutral-700 dark:text-white">
+                <AvatarFallback className="rounded-full bg-emerald-100 font-semibold text-emerald-700 dark:bg-emerald-900 dark:text-emerald-100">
                     {getInitials(user.name)}
                 </AvatarFallback>
             </Avatar>

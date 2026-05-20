@@ -1,5 +1,10 @@
 export type Dataset = {
     id: number;
+    user_id?: number;
+    user?: {
+        id: number;
+        name: string;
+    } | null;
     type: string;
     original_name: string;
     status: string;
@@ -22,6 +27,12 @@ export type ProcessedRecord = {
 
 export type ForecastResult = {
     id: number;
+    user_id?: number;
+    user?: {
+        id: number;
+        name: string;
+    } | null;
+    predicted_at?: string;
     year: number;
     month: number;
     predicted_consumption_kwh: number;
@@ -36,16 +47,33 @@ export type ForecastResult = {
 
 export type DssResult = {
     id: number;
+    user_id?: number;
+    forecast_result_id?: number;
+    user?: {
+        id: number;
+        name: string;
+    } | null;
+    forecast_result?: {
+        id: number;
+        year: number;
+        month: number;
+    } | null;
     demand_status: string;
     readiness_level: string;
     recommendations: string[];
     priority_actions: string[];
     basis?: Record<string, number>;
     created_at: string;
+    updated_at?: string;
 };
 
 export type Report = {
     id: number;
+    user_id?: number;
+    user?: {
+        id: number;
+        name: string;
+    } | null;
     title: string;
     type: string;
     summary: Record<string, unknown>;

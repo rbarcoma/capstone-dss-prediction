@@ -68,7 +68,7 @@
     --card-foreground: oklch(0.145 0 0);
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
+    --primary: oklch(0.696 0.17 162.48);
     --primary-foreground: oklch(0.985 0 0);
     --secondary: oklch(0.97 0 0);
     --secondary-foreground: oklch(0.205 0 0);
@@ -80,19 +80,19 @@
     --destructive-foreground: oklch(0.577 0.245 27.325);
     --border: oklch(0.922 0 0);
     --input: oklch(0.922 0 0);
-    --ring: oklch(0.87 0 0);
+    --ring: oklch(0.696 0.17 162.48);
     --chart-1: oklch(0.646 0.222 41.116);
     --chart-2: oklch(0.6 0.118 184.704);
     --chart-3: oklch(0.398 0.07 227.392);
     --chart-4: oklch(0.828 0.189 84.429);
     --chart-5: oklch(0.769 0.188 70.08);
     --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
+    --sidebar: oklch(1 0 0);
     --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
+    --sidebar-primary: oklch(0.696 0.17 162.48);
     --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
+    --sidebar-accent: oklch(0.97 0.03 162.48);
+    --sidebar-accent-foreground: oklch(0.45 0.12 162.48);
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.87 0 0);
 }
@@ -100,12 +100,12 @@
 .dark {
     --background: oklch(0.145 0 0);
     --foreground: oklch(0.985 0 0);
-    --card: oklch(0.145 0 0);
+    --card: oklch(0.18 0 0);
     --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.145 0 0);
+    --popover: oklch(0.18 0 0);
     --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.985 0 0);
-    --primary-foreground: oklch(0.205 0 0);
+    --primary: oklch(0.696 0.17 162.48);
+    --primary-foreground: oklch(0.985 0 0);
     --secondary: oklch(0.269 0 0);
     --secondary-foreground: oklch(0.985 0 0);
     --muted: oklch(0.269 0 0);
@@ -114,8 +114,8 @@
     --accent-foreground: oklch(0.985 0 0);
     --destructive: oklch(0.396 0.141 25.723);
     --destructive-foreground: oklch(0.637 0.237 25.331);
-    --border: oklch(0.269 0 0);
-    --input: oklch(0.269 0 0);
+    --border: oklch(0.34 0 0);
+    --input: oklch(0.34 0 0);
     --ring: oklch(0.439 0 0);
     --chart-1: oklch(0.488 0.243 264.376);
     --chart-2: oklch(0.696 0.17 162.48);
@@ -124,7 +124,7 @@
     --chart-5: oklch(0.645 0.246 16.439);
     --sidebar: oklch(0.205 0 0);
     --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.985 0 0);
+    --sidebar-primary: oklch(0.696 0.17 162.48);
     --sidebar-primary-foreground: oklch(0.985 0 0);
     --sidebar-accent: oklch(0.269 0 0);
     --sidebar-accent-foreground: oklch(0.985 0 0);
@@ -146,3 +146,131 @@
     }
 }
 
+@layer components {
+    .admin-shell {
+        @apply min-h-screen bg-[#f5f6f8] text-slate-950;
+    }
+
+    .dark .admin-shell {
+        @apply bg-neutral-950 text-neutral-100;
+    }
+
+    .admin-shell > .space-y-6 {
+        @apply w-full max-w-none px-6 py-7 md:px-8;
+    }
+
+    .admin-shell h1 {
+        @apply tracking-tight text-slate-950;
+    }
+
+    .dark .admin-shell h1 {
+        @apply text-white;
+    }
+
+    .admin-shell [data-slot='card'] {
+        @apply w-full rounded-3xl border-slate-200 bg-white shadow-sm;
+    }
+
+    .dark .admin-shell [data-slot='card'] {
+        @apply border-neutral-800 bg-neutral-900 text-neutral-100 shadow-none;
+    }
+
+    .admin-shell [data-slot='card-title'] {
+        @apply text-slate-950;
+    }
+
+    .dark .admin-shell [data-slot='card-title'] {
+        @apply text-white;
+    }
+
+    .admin-shell [data-slot='button']:not([data-variant='outline']):not([data-variant='ghost']) {
+        @apply rounded-2xl bg-emerald-500 font-semibold text-white shadow-sm shadow-emerald-500/20 hover:bg-emerald-600;
+    }
+
+    .admin-shell input,
+    .admin-shell select,
+    .admin-shell textarea {
+        @apply rounded-2xl border-slate-300 bg-white text-slate-950 focus-visible:ring-emerald-500;
+    }
+
+    .dark .admin-shell input,
+    .dark .admin-shell select,
+    .dark .admin-shell textarea {
+        @apply border-neutral-700 bg-neutral-950 text-neutral-100 placeholder:text-neutral-500;
+    }
+
+    .admin-shell table {
+        @apply overflow-hidden;
+    }
+
+    .admin-shell thead tr {
+        @apply bg-slate-50 text-slate-700;
+    }
+
+    .dark .admin-shell thead tr {
+        @apply bg-neutral-800/70 text-neutral-200;
+    }
+
+    .admin-shell tbody tr {
+        @apply border-slate-200;
+    }
+
+    .dark .admin-shell tbody tr {
+        @apply border-neutral-800;
+    }
+
+    .dark .admin-shell tbody tr[class*='bg-primary/5'],
+    .dark .admin-shell tbody tr[class*='bg-emerald-50'] {
+        @apply bg-emerald-950/30;
+    }
+
+    .dark .admin-shell [data-variant='outline'],
+    .dark .admin-shell button:not([data-slot='button']) {
+        @apply border-neutral-700 bg-neutral-950 text-neutral-100 hover:bg-neutral-800 hover:text-white;
+    }
+
+    .dark .admin-shell .bg-white {
+        @apply bg-neutral-900 text-neutral-100;
+    }
+
+    .dark .admin-shell .border-slate-200 {
+        @apply border-neutral-800;
+    }
+
+    .dark .admin-shell .text-black,
+    .dark .admin-shell .text-slate-950 {
+        @apply text-white;
+    }
+
+    .dark .admin-shell .text-gray-500 {
+        @apply text-neutral-400;
+    }
+
+    .dark .admin-shell .hover\:text-black:hover {
+        @apply text-white;
+    }
+
+    .dark .admin-shell .hover\:bg-gray-100:hover {
+        @apply bg-neutral-800;
+    }
+
+    .dark .admin-shell .bg-emerald-50 {
+        @apply bg-emerald-950/40;
+    }
+
+    .dark .admin-shell .text-emerald-700 {
+        @apply text-emerald-300;
+    }
+
+    .dark .admin-shell .bg-red-50 {
+        @apply bg-red-950/40;
+    }
+
+    .dark .admin-shell .text-red-700 {
+        @apply text-red-300;
+    }
+
+    .dark .admin-shell .text-red-600 {
+        @apply text-red-300;
+    }
+}

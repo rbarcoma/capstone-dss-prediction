@@ -1,246 +1,425 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { dashboard, login, register } from '@/routes';
-import { Head, Link, usePage } from '@inertiajs/react';
-import {
-    ArrowRight,
-    BarChart3,
-    Brain,
-    Database,
-    FileText,
-    Leaf,
-    LineChart,
-    Mail,
-    MapPin,
-    Phone,
-    ShieldCheck,
-    SunMedium,
-    Zap,
-} from 'lucide-react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 
 const services = [
     {
         title: 'Consumption Analytics',
-        description: 'Track monthly and yearly electricity patterns with summaries for planning and policy review.',
-        icon: BarChart3,
+        description:
+            'Monitor and analyze electricity consumption patterns for better planning and operational insight.',
     },
     {
         title: 'Machine Learning Forecasting',
-        description: 'Predict next-month electricity consumption using processed historical, climate, and demand data.',
-        icon: Brain,
+        description:
+            'Predict next-month electricity consumption using historical, climate, and demand data.',
     },
     {
         title: 'Decision Support',
-        description: 'Classify demand, assess renewable readiness, and generate priority actions for transition planning.',
-        icon: ShieldCheck,
+        description:
+            'Generate demand classification, renewable readiness, and structured recommendations.',
     },
     {
         title: 'Report Generation',
-        description: 'Prepare printable analytics, forecast, and DSS reports for authorized decision-makers.',
-        icon: FileText,
+        description:
+            'Create analytics, forecast, and decision support reports for authorized decision-makers.',
     },
 ];
 
-const metrics = [
-    ['12+', 'ML input features'],
-    ['3', 'Demand classes'],
-    ['24/7', 'Web access'],
+const aboutCards = [
+    {
+        title: 'Reliable Analytics',
+        description: 'Clear energy usage analysis for Quezon City planning.',
+    },
+    {
+        title: 'Structured Insights',
+        description: 'Data-backed recommendations for renewable transition.',
+    },
+    {
+        title: 'Renewable Readiness',
+        description: 'Assess opportunities for renewable energy adoption.',
+    },
+    {
+        title: 'Long-Term Value',
+        description: 'Support smarter and sustainable energy decisions.',
+    },
 ];
 
-export default function Welcome({ canRegister = true }: { canRegister?: boolean }) {
-    const { auth } = usePage().props;
+export default function Welcome({
+    canRegister = true,
+}: {
+    canRegister?: boolean;
+}) {
+    const { auth, flash } = usePage().props as any;
+    const { data, setData, post, processing, errors, reset } = useForm({
+        name: '',
+        email: '',
+        message: '',
+    });
+
+    const submitContact = (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+
+        post('/contact', {
+            preserveScroll: true,
+            onSuccess: () => reset(),
+        });
+    };
 
     return (
         <>
-            <Head title="Renewable Energy DSS">
-                <link rel="preconnect" href="https://fonts.bunny.net" />
-                <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700" rel="stylesheet" />
-            </Head>
+            <Head title="Renewable Energy DSS" />
 
-            <main className="min-h-screen bg-[#f7faf8] text-slate-950">
-                <header className="fixed inset-x-0 top-0 z-50 border-b border-white/20 bg-slate-950/80 backdrop-blur">
-                    <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8">
-                        <a href="#home" className="flex items-center gap-3 text-white">
-                            <span className="flex size-10 items-center justify-center rounded-md bg-emerald-500">
-                                <Leaf className="size-5" />
-                            </span>
-                            <span className="text-sm font-semibold uppercase tracking-wide">QC Energy DSS</span>
+            <main className="min-h-screen bg-white text-slate-950">
+                <header className="fixed inset-x-0 top-0 z-50 bg-slate-950/70 backdrop-blur-md">
+                    <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+                        <a href="#home" className="flex items-center gap-3">
+                            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500 text-sm font-bold text-white shadow-lg shadow-emerald-500/30">
+                                DE
+                            </div>
+                            <div>
+                                <h1 className="text-lg font-bold text-white">
+                                    DSS Energy
+                                </h1>
+                                <p className="text-xs font-semibold tracking-[0.25em] text-slate-300">
+                                    SMART ENERGY PLATFORM
+                                </p>
+                            </div>
                         </a>
 
-                        <nav className="hidden items-center gap-7 text-sm text-slate-200 md:flex">
-                            <a href="#home" className="hover:text-white">Home</a>
-                            <a href="#about" className="hover:text-white">About Us</a>
-                            <a href="#services" className="hover:text-white">Services</a>
-                            <a href="#contact" className="hover:text-white">Contact Us</a>
-                        </nav>
+                        <nav className="hidden items-center gap-8 text-sm font-medium text-white/80 md:flex">
+                            <a href="#home" className="hover:text-white">
+                                Home
+                            </a>
+                            <a href="#about" className="hover:text-white">
+                                About
+                            </a>
+                            <a href="#services" className="hover:text-white">
+                                Services
+                            </a>
+                            <a href="#contact" className="hover:text-white">
+                                Contact
+                            </a>
 
-                        <div className="flex items-center gap-2">
                             {auth.user ? (
-                                <Button asChild variant="secondary">
+                                <Button
+                                    asChild
+                                    className="rounded-full bg-emerald-500 px-7 text-white hover:bg-emerald-600"
+                                >
                                     <Link href={dashboard()}>Dashboard</Link>
                                 </Button>
                             ) : (
-                                <>
-                                    <Button asChild variant="ghost" className="hidden text-white hover:bg-white/10 hover:text-white sm:inline-flex">
-                                        <Link href={login()}>Log in</Link>
-                                    </Button>
-                                    {canRegister && (
-                                        <Button asChild className="bg-emerald-500 text-white hover:bg-emerald-600">
-                                            <Link href={register()}>Get Started</Link>
-                                        </Button>
-                                    )}
-                                </>
+                                <Button
+                                    asChild
+                                    className="rounded-full bg-emerald-500 px-7 text-white hover:bg-emerald-600"
+                                >
+                                    <Link href={login()}>Log in</Link>
+                                </Button>
                             )}
-                        </div>
+                        </nav>
                     </div>
                 </header>
 
-                <section id="home" className="relative overflow-hidden bg-slate-950 pt-28 text-white">
-                    <div className="absolute inset-0 opacity-30">
-                        <img
-                            src="https://images.unsplash.com/photo-1509391366360-2e959784a276?auto=format&fit=crop&w=1800&q=80"
-                            alt=""
-                            className="h-full w-full object-cover"
-                        />
-                    </div>
-                    <div className="absolute inset-0 bg-slate-950/70" />
+                <section
+                    id="home"
+                    className="relative flex min-h-screen items-center overflow-hidden bg-slate-950 pt-20 text-white"
+                >
+                    <img
+                        src="https://images.unsplash.com/photo-1509391366360-2e959784a276?auto=format&fit=crop&w=1800&q=80"
+                        alt=""
+                        className="absolute inset-0 h-full w-full object-cover opacity-60"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-slate-950/80 via-slate-900/60 to-emerald-950/40" />
 
-                    <div className="relative mx-auto grid max-w-7xl gap-10 px-5 pb-16 pt-16 lg:grid-cols-[1.05fr_0.95fr] lg:px-8 lg:pb-24 lg:pt-24">
-                        <div className="flex flex-col justify-center">
-                            <div className="mb-5 inline-flex w-fit items-center gap-2 rounded-md border border-emerald-300/40 bg-emerald-400/10 px-3 py-1 text-sm text-emerald-100">
-                                <SunMedium className="size-4" />
-                                Renewable energy transition intelligence
+                    <div className="relative mx-auto w-full max-w-7xl px-6 py-24">
+                        <div className="max-w-4xl">
+                            <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-5 py-2 text-sm font-semibold uppercase tracking-[0.25em] text-emerald-100">
+                                <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                                Renewable Energy Analytics Platform
                             </div>
-                            <h1 className="max-w-4xl text-4xl font-bold leading-tight md:text-6xl">
-                                A Decision Support System for Renewable Energy Transition in Quezon City
+
+                            <h1 className="text-5xl font-bold leading-tight tracking-tight md:text-7xl">
+                                Decision Support System for{' '}
+                                <span className="text-emerald-400">
+                                    Renewable Energy
+                                </span>{' '}
+                                Transition in Quezon City
                             </h1>
-                            <p className="mt-6 max-w-2xl text-base leading-7 text-slate-200 md:text-lg">
-                                Analyze electricity consumption, forecast next-month demand, assess readiness, and guide practical renewable energy decisions through data-driven recommendations.
+
+                            <p className="mt-8 max-w-3xl text-lg leading-8 text-slate-100">
+                                A data-driven platform that analyzes average
+                                electricity consumption, forecasts future demand,
+                                and supports renewable energy transition through
+                                machine learning and decision support insights.
                             </p>
-                            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                                <Button asChild size="lg" className="bg-emerald-500 text-white hover:bg-emerald-600">
+
+                            <div className="mt-8 flex flex-wrap gap-3 text-sm text-white/90">
+                                <span className="rounded-full border border-white/20 bg-white/10 px-4 py-2">
+                                    Smarter energy decisions
+                                </span>
+                                <span className="rounded-full border border-white/20 bg-white/10 px-4 py-2">
+                                    Machine learning forecasting
+                                </span>
+                                <span className="rounded-full border border-white/20 bg-white/10 px-4 py-2">
+                                    Renewable planning
+                                </span>
+                            </div>
+
+                            <div className="mt-9 flex flex-wrap gap-4">
+                                <Button
+                                    asChild
+                                    className="h-14 rounded-full bg-emerald-500 px-9 font-semibold text-white hover:bg-emerald-600"
+                                >
                                     <Link href={auth.user ? dashboard() : login()}>
-                                        Open System <ArrowRight className="size-4" />
+                                        Get Started
                                     </Link>
                                 </Button>
-                                <Button asChild size="lg" variant="outline" className="border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white">
-                                    <a href="#services">View Services</a>
-                                </Button>
-                            </div>
-                        </div>
 
-                        <div className="rounded-lg border border-white/15 bg-white/95 p-4 text-slate-950 shadow-2xl">
-                            <div className="mb-4 flex items-center justify-between border-b pb-3">
+                                {canRegister && !auth.user && (
+                                    <Button
+                                        asChild
+                                        variant="outline"
+                                        className="h-14 rounded-full border-white/30 bg-white/10 px-9 font-semibold text-white hover:bg-white/20 hover:text-white"
+                                    >
+                                        <Link href={register()}>
+                                            Create Account
+                                        </Link>
+                                    </Button>
+                                )}
+                            </div>
+
+                            <div className="mt-12 flex gap-12">
                                 <div>
-                                    <p className="text-sm font-medium text-slate-500">Forecast Overview</p>
-                                    <p className="text-xl font-semibold">Next-Month Energy Demand</p>
+                                    <p className="text-3xl font-bold">24/7</p>
+                                    <p className="text-sm text-slate-200">
+                                        Data accessibility
+                                    </p>
                                 </div>
-                                <Zap className="size-6 text-emerald-600" />
-                            </div>
-                            <div className="grid gap-3 sm:grid-cols-3">
-                                {metrics.map(([value, label]) => (
-                                    <div key={label} className="rounded-md border bg-slate-50 p-3">
-                                        <p className="text-2xl font-bold text-emerald-700">{value}</p>
-                                        <p className="text-xs text-slate-500">{label}</p>
-                                    </div>
-                                ))}
-                            </div>
-                            <div className="mt-6 h-44 rounded-md border bg-slate-50 p-4">
-                                <div className="flex h-full items-end gap-3">
-                                    {[48, 62, 54, 78, 72, 88, 82, 96].map((height, index) => (
-                                        <div key={index} className="flex flex-1 flex-col justify-end">
-                                            <div className="rounded-t bg-emerald-500" style={{ height: `${height}%` }} />
-                                        </div>
-                                    ))}
+                                <div>
+                                    <p className="text-3xl font-bold">Smart</p>
+                                    <p className="text-sm text-slate-200">
+                                        Decision insights
+                                    </p>
                                 </div>
-                            </div>
-                            <div className="mt-4 grid gap-3 md:grid-cols-2">
-                                <div className="rounded-md border p-3">
-                                    <p className="text-xs text-slate-500">Demand Status</p>
-                                    <p className="font-semibold">Moderate Demand</p>
-                                </div>
-                                <div className="rounded-md border p-3">
-                                    <p className="text-xs text-slate-500">Readiness Level</p>
-                                    <p className="font-semibold">High Readiness</p>
+                                <div>
+                                    <p className="text-3xl font-bold">Eco</p>
+                                    <p className="text-sm text-slate-200">
+                                        Sustainability focus
+                                    </p>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </section>
 
-                <section id="about" className="mx-auto max-w-7xl px-5 py-20 lg:px-8">
-                    <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
+                <section id="about" className="bg-emerald-50/40 py-24">
+                    <div className="mx-auto grid max-w-7xl gap-14 px-6 lg:grid-cols-[1fr_0.95fr]">
                         <div>
-                            <p className="text-sm font-semibold uppercase text-emerald-700">About Us</p>
-                            <h2 className="mt-3 text-3xl font-bold md:text-4xl">Built for evidence-based energy planning.</h2>
-                        </div>
-                        <div className="space-y-5 text-slate-600">
-                            <p>
-                                QC Energy DSS helps decision-makers understand electricity consumption trends and translate forecasting results into actionable renewable energy transition plans.
+                            <p className="text-sm font-bold uppercase tracking-[0.35em] text-emerald-600">
+                                About Us
                             </p>
-                            <p>
-                                The system combines data management, preprocessing, analytics, machine learning, and decision support in one web-based platform for authorized users.
+                            <h2 className="mt-5 max-w-2xl text-4xl font-bold leading-tight">
+                                Supporting Quezon City in making smarter energy
+                                decisions
+                            </h2>
+                            <p className="mt-8 text-lg leading-8 text-slate-600">
+                                Our Decision Support System helps evaluate
+                                electricity consumption patterns, identify
+                                sustainability opportunities, and explore
+                                renewable energy solutions through data-driven
+                                insights.
                             </p>
-                            <div className="grid gap-4 sm:grid-cols-3">
-                                <div className="rounded-lg border bg-white p-4">
-                                    <Database className="mb-3 size-5 text-emerald-600" />
-                                    <p className="font-semibold text-slate-950">Data Quality</p>
-                                </div>
-                                <div className="rounded-lg border bg-white p-4">
-                                    <LineChart className="mb-3 size-5 text-emerald-600" />
-                                    <p className="font-semibold text-slate-950">Forecast Accuracy</p>
-                                </div>
-                                <div className="rounded-lg border bg-white p-4">
-                                    <Leaf className="mb-3 size-5 text-emerald-600" />
-                                    <p className="font-semibold text-slate-950">Energy Readiness</p>
-                                </div>
-                            </div>
+                            <p className="mt-6 text-lg leading-8 text-slate-600">
+                                The platform combines analytics, visualization,
+                                machine learning forecasting, and structured
+                                recommendations to support better planning and
+                                long-term energy transition strategies.
+                            </p>
                         </div>
-                    </div>
-                </section>
 
-                <section id="services" className="bg-white py-20">
-                    <div className="mx-auto max-w-7xl px-5 lg:px-8">
-                        <div className="max-w-2xl">
-                            <p className="text-sm font-semibold uppercase text-emerald-700">Services</p>
-                            <h2 className="mt-3 text-3xl font-bold md:text-4xl">Core modules for renewable energy transition.</h2>
-                        </div>
-                        <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-                            {services.map((service) => (
-                                <Card key={service.title} className="rounded-lg">
-                                    <CardContent className="p-6">
-                                        <service.icon className="mb-5 size-8 text-emerald-600" />
-                                        <h3 className="text-lg font-semibold">{service.title}</h3>
-                                        <p className="mt-3 text-sm leading-6 text-slate-600">{service.description}</p>
-                                    </CardContent>
-                                </Card>
+                        <div className="grid gap-6 sm:grid-cols-2">
+                            {aboutCards.map((item) => (
+                                <div
+                                    key={item.title}
+                                    className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm"
+                                >
+                                    <h3 className="text-xl font-bold">
+                                        {item.title}
+                                    </h3>
+                                    <p className="mt-5 leading-7 text-slate-600">
+                                        {item.description}
+                                    </p>
+                                </div>
                             ))}
                         </div>
                     </div>
                 </section>
 
-                <section id="contact" className="mx-auto max-w-7xl px-5 py-20 lg:px-8">
-                    <div className="grid gap-8 rounded-lg bg-slate-950 p-6 text-white md:p-10 lg:grid-cols-[0.9fr_1.1fr]">
+                <section id="services" className="bg-slate-50 py-24">
+                    <div className="mx-auto max-w-7xl px-6">
+                        <div className="text-center">
+                            <p className="text-sm font-bold uppercase tracking-[0.35em] text-emerald-600">
+                                Services
+                            </p>
+                            <h2 className="mt-5 text-4xl font-bold">
+                                What our platform provides
+                            </h2>
+                            <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-slate-600">
+                                Explore the key capabilities that help analyze,
+                                forecast, evaluate, and improve renewable energy
+                                transition strategies.
+                            </p>
+                        </div>
+
+                        <div className="mt-16 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+                            {services.map((service) => (
+                                <div
+                                    key={service.title}
+                                    className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm"
+                                >
+                                    <h3 className="text-xl font-bold">
+                                        {service.title}
+                                    </h3>
+                                    <p className="mt-5 leading-7 text-slate-600">
+                                        {service.description}
+                                    </p>
+                                    <div className="mt-8 h-1 w-12 rounded-full bg-emerald-500" />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+                <section
+                    id="contact"
+                    className="bg-gradient-to-r from-white to-emerald-50 py-24"
+                >
+                    <div className="mx-auto grid max-w-7xl gap-14 px-6 lg:grid-cols-[0.95fr_1fr]">
                         <div>
-                            <p className="text-sm font-semibold uppercase text-emerald-300">Contact Us</p>
-                            <h2 className="mt-3 text-3xl font-bold">Coordinate energy planning with better data.</h2>
-                            <div className="mt-8 space-y-4 text-sm text-slate-200">
-                                <p className="flex items-center gap-3"><MapPin className="size-4 text-emerald-300" /> Quezon City, Philippines</p>
-                                <p className="flex items-center gap-3"><Mail className="size-4 text-emerald-300" /> energy.dss@example.com</p>
-                                <p className="flex items-center gap-3"><Phone className="size-4 text-emerald-300" /> +63 912 345 6789</p>
+                            <p className="text-sm font-bold uppercase tracking-[0.35em] text-emerald-600">
+                                Contact
+                            </p>
+                            <h2 className="mt-5 text-4xl font-bold">
+                                Get in touch with us
+                            </h2>
+                            <p className="mt-7 text-lg leading-8 text-slate-600">
+                                Have questions about the platform, renewable
+                                energy analytics, or Quezon City electricity
+                                consumption forecasting? Reach out to us and
+                                we’ll help you learn more about the system.
+                            </p>
+
+                            <div className="mt-10 space-y-5">
+                                <div className="rounded-2xl border bg-white p-5">
+                                    <p className="font-bold">Email</p>
+                                    <p className="mt-1 text-slate-600">
+                                        dsspredictionqc@gmail.com
+                                    </p>
+                                </div>
+                                <div className="rounded-2xl border bg-white p-5">
+                                    <p className="font-bold">Phone</p>
+                                    <p className="mt-1 text-slate-600">
+                                        +63 912 345 6789
+                                    </p>
+                                </div>
+                                <div className="rounded-2xl border bg-white p-5">
+                                    <p className="font-bold">Address</p>
+                                    <p className="mt-1 text-slate-600">
+                                        Quezon City, Philippines
+                                    </p>
+                                </div>
                             </div>
                         </div>
-                        <form className="grid gap-4 rounded-lg bg-white p-5 text-slate-950">
-                            <div className="grid gap-4 sm:grid-cols-2">
-                                <input className="rounded-md border px-3 py-3 text-sm" placeholder="Full name" />
-                                <input className="rounded-md border px-3 py-3 text-sm" placeholder="Email address" />
+
+                        <form
+                            className="rounded-3xl border border-slate-200 bg-white p-8 shadow-2xl shadow-slate-200/70"
+                            onSubmit={submitContact}
+                        >
+                            <div className="grid gap-5">
+                                {flash?.success && (
+                                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+                                        {flash.success}
+                                    </div>
+                                )}
+
+                                <div>
+                                    <label className="text-sm font-medium">
+                                        Full Name
+                                    </label>
+                                    <input
+                                        name="name"
+                                        value={data.name}
+                                        onChange={(event) =>
+                                            setData('name', event.target.value)
+                                        }
+                                        className="mt-2 h-14 w-full rounded-2xl border px-4 outline-none focus:border-emerald-500"
+                                        placeholder="Enter your full name"
+                                    />
+                                    {errors.name && (
+                                        <p className="mt-2 text-sm text-red-600">
+                                            {errors.name}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className="text-sm font-medium">
+                                        Email Address
+                                    </label>
+                                    <input
+                                        name="email"
+                                        type="email"
+                                        value={data.email}
+                                        onChange={(event) =>
+                                            setData('email', event.target.value)
+                                        }
+                                        className="mt-2 h-14 w-full rounded-2xl border px-4 outline-none focus:border-emerald-500"
+                                        placeholder="Enter your email"
+                                    />
+                                    {errors.email && (
+                                        <p className="mt-2 text-sm text-red-600">
+                                            {errors.email}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className="text-sm font-medium">
+                                        Message
+                                    </label>
+                                    <textarea
+                                        name="message"
+                                        value={data.message}
+                                        onChange={(event) =>
+                                            setData('message', event.target.value)
+                                        }
+                                        className="mt-2 min-h-40 w-full rounded-2xl border px-4 py-4 outline-none focus:border-emerald-500"
+                                        placeholder="Enter your message"
+                                    />
+                                    {errors.message && (
+                                        <p className="mt-2 text-sm text-red-600">
+                                            {errors.message}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <Button
+                                    type="submit"
+                                    disabled={processing}
+                                    className="h-14 rounded-2xl bg-emerald-500 font-semibold text-white hover:bg-emerald-600"
+                                >
+                                    {processing ? 'Sending...' : 'Send Message'}
+                                </Button>
                             </div>
-                            <input className="rounded-md border px-3 py-3 text-sm" placeholder="Organization" />
-                            <textarea className="min-h-32 rounded-md border px-3 py-3 text-sm" placeholder="Message" />
-                            <Button type="button" className="bg-emerald-500 text-white hover:bg-emerald-600">Send Message</Button>
                         </form>
                     </div>
                 </section>
+
+                <footer className="bg-slate-950 px-6 py-10 text-center text-white">
+                    <p>© 2026 DSS Energy. All rights reserved.</p>
+                    <p className="mt-3 text-sm text-slate-400">
+                        Transforming Energy Data into Sustainable Decisions
+                    </p>
+                </footer>
             </main>
         </>
     );

@@ -9,6 +9,7 @@ import { edit as editAppearance } from '@/routes/appearance';
 import { edit } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
 import type { NavItem } from '@/types';
+import { ClipboardList } from 'lucide-react';
 
 const sidebarNavItems: NavItem[] = [
     {

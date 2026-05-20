@@ -2,8 +2,10 @@
 
 namespace App\Support;
 
+use App\Models\DssResult;
 use App\Models\ForecastResult;
 use App\Models\ProcessedRecord;
+use Carbon\CarbonInterface;
 
 class EnergyDss
 {
@@ -41,30 +43,92 @@ class EnergyDss
         $predicted = (float) $forecast->predicted_consumption_kwh;
 
         if ($demand === 'High Demand' && $solar >= 4) {
-            $items[] = 'Plan solar energy transition for high-demand facilities and priority public buildings.';
-            $actions[] = 'Prepare solar PV feasibility screening and roof/site inventory.';
+
+            $items[] = 'The system detected a high electricity demand together with good solar energy potential. Because of this, the area may benefit from starting renewable energy transition planning, especially for government buildings, public facilities, and other high-consumption establishments.';
+
+            $actions[] = 'The administration should begin conducting solar photovoltaic feasibility studies, evaluate available rooftop or open-space areas for solar panel installation, and identify facilities with the highest electricity consumption for possible renewable energy integration.';
         }
 
         if ($peak > ($predicted * 0.18)) {
-            $items[] = 'Apply energy efficiency and load management programs to reduce peak demand.';
-            $actions[] = 'Schedule demand response, efficient equipment replacement, and peak-hour monitoring.';
+
+            $items[] = 'The system identified that the peak demand is relatively high compared to the predicted electricity consumption. This may indicate heavy electricity usage during certain hours, which can increase operational costs and pressure on the energy supply system.';
+
+            $actions[] = 'The administration is encouraged to implement energy efficiency programs, monitor peak-hour electricity usage, replace inefficient equipment, and apply load management strategies to reduce excessive demand during high-consumption periods.';
         }
 
         if (($forecast->change_percent ?? 0) > 5) {
-            $items[] = 'Conduct renewable energy feasibility assessment because forecasted consumption is increasing.';
-            $actions[] = 'Review high-growth barangays or facilities and prioritize renewable offset targets.';
+
+            $items[] = 'The forecasted electricity consumption shows a noticeable increase compared to the previous period. This may indicate growing energy demand, population activity, or operational expansion that could require additional renewable energy planning and energy management preparation.';
+
+            $actions[] = 'The administration should review facilities or locations with increasing electricity consumption, monitor areas with rapid energy growth, and prioritize renewable energy projects that can help offset future electricity demand.';
         }
 
         if ($readiness === 'Low Readiness') {
-            $items[] = 'Improve data collection and energy monitoring before large renewable investments.';
-            $actions[] = 'Standardize monthly electricity, climate, solar, and peak-demand reporting.';
+
+            $items[] = 'The system assessed that the current renewable energy readiness level is still low. This may be caused by limited solar energy potential, insufficient monitoring data, or high peak electricity demand that may affect renewable energy transition planning.';
+
+            $actions[] = 'The administration should first improve electricity and environmental data collection, strengthen energy monitoring practices, and establish a more consistent monthly reporting process before implementing large-scale renewable energy investments.';
         }
 
         if ($items === []) {
-            $items[] = 'Maintain monitoring and prepare phased renewable energy transition options.';
-            $actions[] = 'Update forecasts monthly and compare actual consumption against predicted values.';
+
+            $items[] = 'The system assessment shows that the current electricity demand and renewable energy readiness are within manageable conditions. At this stage, continuous monitoring and gradual renewable energy preparation are recommended to maintain stable energy planning.';
+
+            $actions[] = 'The administration should continue updating electricity forecasts regularly, compare actual and predicted consumption results, maintain energy monitoring activities, and gradually prepare long-term renewable energy transition strategies.';
         }
 
         return [$items, $actions];
+    }
+
+    public static function generateForForecast(ForecastResult $forecast, ?int $userId = null, ?CarbonInterface $generatedAt = null): DssResult
+    {
+        $latest = ProcessedRecord::query()
+            ->orderByDesc('year')
+            ->orderByDesc('month')
+            ->first();
+
+        $average = (float) ProcessedRecord::avg('consumption_kwh');
+
+        $demand = self::classifyDemand(
+            (float) $forecast->predicted_consumption_kwh,
+            $average
+        );
+
+        $readiness = self::readiness(
+            (float) ($latest?->solar_irradiance ?? 0),
+            (float) ($latest?->peak_demand_kw ?? 0),
+            (float) $forecast->predicted_consumption_kwh
+        );
+
+        [$recommendations, $actions] = self::recommendations(
+            $forecast,
+            $latest,
+            $demand,
+            $readiness
+        );
+
+        $dss = DssResult::updateOrCreate([
+            'forecast_result_id' => $forecast->id,
+        ], [
+            'user_id' => $userId,
+            'demand_status' => $demand,
+            'readiness_level' => $readiness,
+            'recommendations' => $recommendations,
+            'priority_actions' => $actions,
+            'basis' => [
+                'predicted_consumption_kwh' => (float) $forecast->predicted_consumption_kwh,
+                'average_consumption_kwh' => $average,
+                'peak_demand_kw' => (float) ($latest?->peak_demand_kw ?? 0),
+                'solar_irradiance' => (float) ($latest?->solar_irradiance ?? 0),
+            ],
+        ]);
+
+        $generatedAt ??= now();
+
+        $dss->forceFill([
+            'updated_at' => $generatedAt,
+        ])->saveQuietly();
+
+        return $dss->refresh();
     }
 }

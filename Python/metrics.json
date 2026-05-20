@@ -1,0 +1,20 @@
+{
+    "mae": 51991.1038,
+    "rmse": 66714.131,
+    "r2_score": 0.6038,
+    "model_type": "Linear Regression",
+    "all_metrics": [
+        {
+            "mae": 51991.1038,
+            "rmse": 66714.131,
+            "r2_score": 0.6038,
+            "model_type": "Linear Regression"
+        },
+        {
+            "mae": 72979.034,
+            "rmse": 88086.8375,
+            "r2_score": 0.3093,
+            "model_type": "Random Forest Regression"
+        }
+    ]
+}

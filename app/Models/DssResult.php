@@ -3,10 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DssResult extends Model
 {
     protected $fillable = [
+        'user_id',
         'forecast_result_id',
         'demand_status',
         'readiness_level',
@@ -22,5 +24,15 @@ class DssResult extends Model
             'priority_actions' => 'array',
             'basis' => 'array',
         ];
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function forecastResult(): BelongsTo
+    {
+        return $this->belongsTo(ForecastResult::class);
     }
 }
