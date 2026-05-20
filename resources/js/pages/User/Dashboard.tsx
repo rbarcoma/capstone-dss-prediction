@@ -198,7 +198,7 @@ function EnergyConditionChart({ data }: { data: TrendPoint[] }) {
                     <Bar
                         dataKey="peakDemand"
                         name="Peak Demand"
-                        fill="#2563eb"
+                        fill="#059669"
                         radius={[4, 4, 0, 0]}
                     />
                     <Bar

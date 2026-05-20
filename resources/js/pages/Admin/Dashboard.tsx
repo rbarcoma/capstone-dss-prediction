@@ -213,7 +213,7 @@ function YearlyAverageChart({ data }: { data: YearlyPoint[] }) {
                     <Line
                         type="monotone"
                         dataKey="consumption"
-                        stroke="#2563eb"
+                        stroke="#059669"
                         strokeWidth={3}
                         dot={{ r: 4 }}
                         activeDot={{ r: 6 }}
@@ -251,7 +251,7 @@ function EnergyConditionChart({ data }: { data: TrendPoint[] }) {
                     <Bar
                         dataKey="peakDemand"
                         name="Peak Demand"
-                        fill="#2563eb"
+                        fill="#059669"
                         radius={[4, 4, 0, 0]}
                     />
                     <Bar
