@@ -55,6 +55,16 @@ function formatNumber(value?: number | string) {
     });
 }
 
+function formatTooltipNumber(value: unknown) {
+    const numberValue = Array.isArray(value) ? value[0] : value;
+
+    return formatNumber(
+        typeof numberValue === 'number' || typeof numberValue === 'string'
+            ? numberValue
+            : 0,
+    );
+}
+
 function formatPeriod(year?: number, month?: number) {
     if (!year || !month) {
         return '-';
@@ -135,8 +145,8 @@ function ConsumptionTrendChart({ data }: { data: TrendPoint[] }) {
                         tickMargin={8}
                     />
                     <Tooltip
-                        formatter={(value: number) => [
-                            `${formatNumber(value)} kWh`,
+                        formatter={(value) => [
+                            `${formatTooltipNumber(value)} kWh`,
                             'Consumption',
                         ]}
                         labelFormatter={(label) => `Period ${label}`}

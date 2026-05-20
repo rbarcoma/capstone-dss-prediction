@@ -24,8 +24,6 @@ import {
     Bar,
     BarChart,
     CartesianGrid,
-    Line,
-    LineChart as RechartsLineChart,
     ResponsiveContainer,
     Tooltip,
     XAxis,
@@ -66,6 +64,16 @@ function formatNumber(value?: number | string) {
     return Number(value ?? 0).toLocaleString(undefined, {
         maximumFractionDigits: 2,
     });
+}
+
+function formatTooltipNumber(value: unknown) {
+    const numberValue = Array.isArray(value) ? value[0] : value;
+
+    return formatNumber(
+        typeof numberValue === 'number' || typeof numberValue === 'string'
+            ? numberValue
+            : 0,
+    );
 }
 
 function formatPeriod(year?: number, month?: number) {
@@ -152,8 +160,8 @@ function ConsumptionTrendChart({ data }: { data: TrendPoint[] }) {
                         tickLine={false}
                     />
                     <Tooltip
-                        formatter={(value: number) => [
-                            `${formatNumber(value)} kWh`,
+                        formatter={(value) => [
+                            `${formatTooltipNumber(value)} kWh`,
                             'Consumption',
                         ]}
                         labelFormatter={(label) => `Period ${label}`}
@@ -183,10 +191,30 @@ function YearlyAverageChart({ data }: { data: YearlyPoint[] }) {
     return (
         <div className="h-[220px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-                <RechartsLineChart
+                <AreaChart
                     data={prepared}
                     margin={{ top: 8, right: 8, left: 0, bottom: 4 }}
                 >
+                    <defs>
+                        <linearGradient
+                            id="adminYearlyConsumption"
+                            x1="0"
+                            x2="0"
+                            y1="0"
+                            y2="1"
+                        >
+                            <stop
+                                offset="5%"
+                                stopColor="#059669"
+                                stopOpacity={0.28}
+                            />
+                            <stop
+                                offset="95%"
+                                stopColor="#059669"
+                                stopOpacity={0.02}
+                            />
+                        </linearGradient>
+                    </defs>
                     <CartesianGrid
                         stroke="var(--border)"
                         strokeDasharray="3 3"
@@ -198,27 +226,28 @@ function YearlyAverageChart({ data }: { data: YearlyPoint[] }) {
                         tickLine={false}
                     />
                     <YAxis
-                        axisLine={false}
+                        axisLine={{ stroke: 'var(--border)' }}
                         tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }}
                         tickFormatter={(value) => `${Number(value) / 1000}k`}
                         tickLine={false}
                     />
                     <Tooltip
-                        formatter={(value: number) => [
-                            `${formatNumber(value)} kWh`,
+                        formatter={(value) => [
+                            `${formatTooltipNumber(value)} kWh`,
                             'Average',
                         ]}
                         contentStyle={tooltipStyle}
                     />
-                    <Line
+                    <Area
                         type="monotone"
                         dataKey="consumption"
                         stroke="#059669"
                         strokeWidth={3}
-                        dot={{ r: 4 }}
+                        fill="url(#adminYearlyConsumption)"
+                        dot={{ r: 3, strokeWidth: 2 }}
                         activeDot={{ r: 6 }}
                     />
-                </RechartsLineChart>
+                </AreaChart>
             </ResponsiveContainer>
         </div>
     );

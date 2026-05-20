@@ -7,9 +7,9 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import {
+    Area,
+    AreaChart,
     CartesianGrid,
-    Line,
-    LineChart,
     ResponsiveContainer,
     Tooltip,
     XAxis,
@@ -35,57 +35,75 @@ function formatChartData(data: any[]) {
     }));
 }
 
-function AnalyticsChart({ data }: { data: any[] }) {
+function AnalyticsChart({
+    data,
+    gradientId,
+}: {
+    data: any[];
+    gradientId: string;
+}) {
     const chartData = formatChartData(data);
-    const axisColor = 'var(--muted-foreground)';
-    const borderColor = 'var(--border)';
     const tooltipStyle = {
         backgroundColor: 'var(--popover)',
         border: '1px solid var(--border)',
+        borderRadius: '8px',
         color: 'var(--popover-foreground)',
     };
 
     return (
         <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-                <LineChart
+                <AreaChart
                     data={chartData}
-                    margin={{
-                        top: 20,
-                        right: 30,
-                        left: 20,
-                        bottom: 20,
-                    }}
+                    margin={{ top: 12, right: 18, left: 4, bottom: 8 }}
                 >
-                    <CartesianGrid strokeDasharray="3 3" stroke={borderColor} />
+                    <defs>
+                        <linearGradient
+                            id={gradientId}
+                            x1="0"
+                            x2="0"
+                            y1="0"
+                            y2="1"
+                        >
+                            <stop
+                                offset="5%"
+                                stopColor="#059669"
+                                stopOpacity={0.28}
+                            />
+                            <stop
+                                offset="95%"
+                                stopColor="#059669"
+                                stopOpacity={0.02}
+                            />
+                        </linearGradient>
+                    </defs>
+                    <CartesianGrid
+                        stroke="var(--border)"
+                        strokeDasharray="3 3"
+                    />
                     <XAxis
                         dataKey="label"
-                        tick={{ fontSize: 12, fill: axisColor }}
+                        axisLine={{ stroke: 'var(--border)' }}
+                        tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }}
+                        tickLine={false}
                         tickMargin={10}
-                        axisLine={{ stroke: borderColor }}
-                        tickLine={{ stroke: borderColor }}
                     />
                     <YAxis
-                        tick={{ fontSize: 12, fill: axisColor }}
-                        tickMargin={10}
-                        axisLine={{ stroke: borderColor }}
-                        tickLine={{ stroke: borderColor }}
+                        axisLine={{ stroke: 'var(--border)' }}
+                        tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }}
+                        tickLine={false}
                     />
                     <Tooltip contentStyle={tooltipStyle} />
-                    <Line
+                    <Area
                         type="monotone"
                         dataKey="value"
-                        stroke="#16a34a"
+                        stroke="#059669"
                         strokeWidth={3}
-                        dot={{
-                            r: 4,
-                            strokeWidth: 2,
-                        }}
-                        activeDot={{
-                            r: 6,
-                        }}
+                        fill={`url(#${gradientId})`}
+                        dot={{ r: 3, strokeWidth: 2 }}
+                        activeDot={{ r: 6 }}
                     />
-                </LineChart>
+                </AreaChart>
             </ResponsiveContainer>
         </div>
     );
@@ -132,7 +150,8 @@ export default function Analytics({
                     Consumption Analytics
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                    Historical consumption, seasonal behavior, and peak demand insights.
+                    Historical consumption, seasonal behavior, and peak demand
+                    insights.
                 </p>
             </div>
 
@@ -184,7 +203,10 @@ export default function Analytics({
                         <CardTitle>Monthly Consumption Trend</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <AnalyticsChart data={monthlyTrend} />
+                        <AnalyticsChart
+                            data={monthlyTrend}
+                            gradientId="analyticsMonthlyConsumption"
+                        />
                     </CardContent>
                 </Card>
 
@@ -193,7 +215,10 @@ export default function Analytics({
                         <CardTitle>Yearly Comparison</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <AnalyticsChart data={yearlyComparison} />
+                        <AnalyticsChart
+                            data={yearlyComparison}
+                            gradientId="analyticsYearlyComparison"
+                        />
                     </CardContent>
                 </Card>
 
@@ -202,7 +227,10 @@ export default function Analytics({
                         <CardTitle>Seasonal Pattern Analysis</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <AnalyticsChart data={seasonalPattern} />
+                        <AnalyticsChart
+                            data={seasonalPattern}
+                            gradientId="analyticsSeasonalPattern"
+                        />
                     </CardContent>
                 </Card>
             </div>
@@ -213,7 +241,7 @@ export default function Analytics({
                         <DialogTitle>{infoModal?.title}</DialogTitle>
                     </DialogHeader>
 
-                    <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
+                    <p className="text-sm leading-relaxed whitespace-pre-line text-muted-foreground">
                         {infoModal?.content}
                     </p>
                 </DialogContent>
