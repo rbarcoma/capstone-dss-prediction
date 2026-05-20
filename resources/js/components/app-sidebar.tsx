@@ -11,7 +11,7 @@ import {
     FileText,
     Users,
     FolderGit2,
-    ClipboardList
+    ClipboardList,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
@@ -84,22 +84,46 @@ const adminNavItems: NavItem[] = [
         icon: ClipboardList,
         permission: 'admin.audit_trail',
     },
-        {
-            title: 'RBAC',
-            href: '/admin/users',
-            icon: Users,
-            permission: 'admin.rbac',
-        },
+    {
+        title: 'User Management',
+        href: '/admin/users',
+        icon: Users,
+        permission: 'admin.rbac',
+    },
 ];
 
 const userNavItems: NavItem[] = [
-    { title: 'Dashboard', href: '/user/dashboard', icon: LayoutGrid, permission: 'user.dashboard' },
-    { title: 'Analytics', href: '/user/analytics', icon: BarChart3, permission: 'user.analytics' },
-    { title: 'Forecast Results', href: '/user/forecast-results', icon: Brain, permission: 'user.forecast_results' },
-    { title: 'Decision Support', href: '/user/decision-support-results', icon: Lightbulb, permission: 'user.decision_support' },
-    { title: 'Reports', href: '/user/reports', icon: FileText, permission: 'user.reports' },
+    {
+        title: 'Dashboard',
+        href: '/user/dashboard',
+        icon: LayoutGrid,
+        permission: 'user.dashboard',
+    },
+    {
+        title: 'Analytics',
+        href: '/user/analytics',
+        icon: BarChart3,
+        permission: 'user.analytics',
+    },
+    {
+        title: 'Forecast Results',
+        href: '/user/forecast-results',
+        icon: Brain,
+        permission: 'user.forecast_results',
+    },
+    {
+        title: 'Decision Support',
+        href: '/user/decision-support-results',
+        icon: Lightbulb,
+        permission: 'user.decision_support',
+    },
+    {
+        title: 'Reports',
+        href: '/user/reports',
+        icon: FileText,
+        permission: 'user.reports',
+    },
 ];
-
 
 const footerNavItems: NavItem[] = [
     {
@@ -114,15 +138,17 @@ export function AppSidebar() {
     const [deniedItem, setDeniedItem] = useState<NavItem | null>(null);
     const isAdmin = auth?.user?.role === 'admin';
     const availableItems = isAdmin ? adminNavItems : userNavItems;
-    const permissions = auth?.user?.permissions ?? availableItems
-        .map((item) => item.permission)
-        .filter(Boolean);
+    const permissions =
+        auth?.user?.permissions ??
+        availableItems.map((item) => item.permission).filter(Boolean);
     const mainNavItems = availableItems.map((item) => ({
         ...item,
         hasAccess: !item.permission || permissions.includes(item.permission),
     }));
     const firstAccessibleItem = mainNavItems.find((item) => item.hasAccess);
-    const homeHref = firstAccessibleItem?.href ?? (isAdmin ? '/admin/dashboard' : '/user/dashboard');
+    const homeHref =
+        firstAccessibleItem?.href ??
+        (isAdmin ? '/admin/dashboard' : '/user/dashboard');
 
     return (
         <>
@@ -153,7 +179,10 @@ export function AppSidebar() {
                 </SidebarFooter>
             </Sidebar>
 
-            <Dialog open={!!deniedItem} onOpenChange={() => setDeniedItem(null)}>
+            <Dialog
+                open={!!deniedItem}
+                onOpenChange={() => setDeniedItem(null)}
+            >
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Access denied</DialogTitle>

@@ -23,7 +23,7 @@ class UserManagementController extends Controller
             ['key' => 'admin.decision_support', 'label' => 'Decision Support'],
             ['key' => 'admin.reports', 'label' => 'Reports'],
             ['key' => 'admin.audit_trail', 'label' => 'Audit Trail'],
-            ['key' => 'admin.rbac', 'label' => 'RBAC'],
+            ['key' => 'admin.rbac', 'label' => 'User Management'],
         ],
         'user' => [
             ['key' => 'user.dashboard', 'label' => 'Dashboard'],
@@ -37,11 +37,11 @@ class UserManagementController extends Controller
     private array $roles = [
         'admin' => [
             'label' => 'Admin',
-            'scope' => 'Administrative account with selected admin modules',
+            'scope' => 'Full administrative control panel',
         ],
         'user' => [
             'label' => 'User',
-            'scope' => 'Decision-maker account with selected viewer modules',
+            'scope' => 'Limited Decision-Maker Access',
         ],
     ];
 
@@ -71,8 +71,8 @@ class UserManagementController extends Controller
         $user = User::create($data);
 
         AuditLogger::log(
-            'RBAC',
-            'Create User Role Assignment',
+            'User Management',
+            'Create User Account',
             'Created user account ' . $user->email . ' with ' . $this->roles[$user->role]['label'] . ' role and selected module permissions.'
         );
 
@@ -107,8 +107,8 @@ class UserManagementController extends Controller
         $user->update($data);
 
         AuditLogger::log(
-            'RBAC',
-            'Update User Role Assignment',
+            'User Management',
+            'Update User Account',
             'Updated user account ' . $user->email . ' with ' . $this->roles[$user->role]['label'] . ' role and selected module permissions.'
         );
 
@@ -134,8 +134,8 @@ class UserManagementController extends Controller
         $user->delete();
 
         AuditLogger::log(
-            'RBAC',
-            'Delete User Role Assignment',
+            'User Management',
+            'Delete User Account',
             'Deleted user account and role assignment: ' . $email . '.'
         );
 
