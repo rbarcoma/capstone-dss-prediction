@@ -1,11 +1,56 @@
 import { StatCard } from '@/components/dss/stat-card';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import type { ProcessedRecord } from '@/types';
 import { router, usePage } from '@inertiajs/react';
-import { Search } from 'lucide-react';
+import { Activity, CloudSun, Database, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
+
+type RecordInfo = {
+    title: string;
+    description: string;
+    points: string[];
+};
+
+const recordInfo: Record<string, RecordInfo> = {
+    consumption: {
+        title: 'Consumption Records',
+        description:
+            'Consumption records are the raw electricity demand entries, usually measured in kWh for each month or period.',
+        points: [
+            'They represent the main historical demand signal used by the system.',
+            'During preprocessing, these records are checked for missing values, sorted by date, and aligned with climate records.',
+            'In the machine learning workflow, consumption values become the primary target pattern used to train and validate demand forecasts.',
+        ],
+    },
+    climate: {
+        title: 'Climate Records',
+        description:
+            'Climate records contain supporting environmental inputs such as temperature, solar irradiance, and peak demand conditions.',
+        points: [
+            'They help explain why electricity demand rises or falls across different months and seasons.',
+            'During preprocessing, climate values are merged with matching consumption periods to create one complete analytical dataset.',
+            'In machine learning, these fields work as features that improve forecast context and renewable energy readiness analysis.',
+        ],
+    },
+    processed: {
+        title: 'Processed Records',
+        description:
+            'Processed records are the cleaned, merged, and model-ready rows produced after preprocessing consumption and climate data.',
+        points: [
+            'They combine demand and climate inputs into a consistent monthly structure.',
+            'They are the dataset previewed in the table and used by analytics, forecasting, and decision support modules.',
+            'In the machine learning workflow, processed records reduce noise and give the model reliable feature columns for training and prediction.',
+        ],
+    },
+};
 
 export default function Preprocessing({
     processedRecords = [],
@@ -19,6 +64,7 @@ export default function Preprocessing({
     const [search, setSearch] = useState('');
     const [yearFilter, setYearFilter] = useState('all');
     const [currentPage, setCurrentPage] = useState(1);
+    const [infoModal, setInfoModal] = useState<RecordInfo | null>(null);
 
     const [itemsPerPage, setItemsPerPage] = useState(10);
 
@@ -41,7 +87,9 @@ export default function Preprocessing({
     }, [processedRecords, search, yearFilter]);
 
     const uniqueYears = Array.from(
-        new Set(processedRecords.map((item) => String(item.year)).filter(Boolean)),
+        new Set(
+            processedRecords.map((item) => String(item.year)).filter(Boolean),
+        ),
     );
 
     const totalPages = Math.ceil(filteredRecords.length / itemsPerPage);
@@ -59,11 +107,14 @@ export default function Preprocessing({
                         Data Preprocessing
                     </h1>
                     <p className="text-sm text-muted-foreground">
-                        Merge records, clean missing values, sort dates, and generate ML features.
+                        Merge records, clean missing values, sort dates, and
+                        generate ML features.
                     </p>
                 </div>
 
-                <Button onClick={() => router.post('/admin/data-preprocessing/run')}>
+                <Button
+                    onClick={() => router.post('/admin/data-preprocessing/run')}
+                >
                     Run Preprocessing
                 </Button>
             </div>
@@ -84,16 +135,25 @@ export default function Preprocessing({
                 <StatCard
                     title="Consumption Records"
                     value={counts.consumption ?? 0}
+                    helper="Raw electricity demand inputs"
+                    icon={Activity}
+                    onInfoClick={() => setInfoModal(recordInfo.consumption)}
                 />
 
                 <StatCard
                     title="Climate Records"
                     value={counts.climate ?? 0}
+                    helper="Weather and solar feature inputs"
+                    icon={CloudSun}
+                    onInfoClick={() => setInfoModal(recordInfo.climate)}
                 />
 
                 <StatCard
                     title="Processed Records"
                     value={counts.processed ?? 0}
+                    helper="Cleaned ML-ready records"
+                    icon={Database}
+                    onInfoClick={() => setInfoModal(recordInfo.processed)}
                 />
             </div>
 
@@ -104,7 +164,7 @@ export default function Preprocessing({
 
                         <div className="flex flex-col gap-2 md:flex-row">
                             <div className="relative">
-                                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                <Search className="absolute top-3 left-3 h-4 w-4 text-muted-foreground" />
 
                                 <Input
                                     className="w-full pl-9 md:w-64"
@@ -152,11 +212,19 @@ export default function Preprocessing({
                     <table className="w-full text-sm">
                         <thead>
                             <tr className="border-b bg-muted/40 text-left">
-                                <th className="px-3 py-3 font-semibold">Period</th>
+                                <th className="px-3 py-3 font-semibold">
+                                    Period
+                                </th>
                                 <th className="px-3 py-3 font-semibold">kWh</th>
-                                <th className="px-3 py-3 font-semibold">Temp</th>
-                                <th className="px-3 py-3 font-semibold">Solar</th>
-                                <th className="px-3 py-3 font-semibold">Peak kW</th>
+                                <th className="px-3 py-3 font-semibold">
+                                    Temp
+                                </th>
+                                <th className="px-3 py-3 font-semibold">
+                                    Solar
+                                </th>
+                                <th className="px-3 py-3 font-semibold">
+                                    Peak kW
+                                </th>
                             </tr>
                         </thead>
 
@@ -165,7 +233,11 @@ export default function Preprocessing({
                                 paginatedRecords.map((item) => (
                                     <tr key={item.id} className="border-b">
                                         <td className="px-3 py-3">
-                                            {item.year}-{String(item.month).padStart(2, '0')}
+                                            {item.year}-
+                                            {String(item.month).padStart(
+                                                2,
+                                                '0',
+                                            )}
                                         </td>
                                         <td className="px-3 py-3">
                                             {item.consumption_kwh}
@@ -218,7 +290,8 @@ export default function Preprocessing({
                                 variant="outline"
                                 size="sm"
                                 disabled={
-                                    currentPage === totalPages || totalPages === 0
+                                    currentPage === totalPages ||
+                                    totalPages === 0
                                 }
                                 onClick={() => setCurrentPage(currentPage + 1)}
                             >
@@ -228,6 +301,29 @@ export default function Preprocessing({
                     </div>
                 </CardContent>
             </Card>
+
+            <Dialog open={!!infoModal} onOpenChange={() => setInfoModal(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{infoModal?.title}</DialogTitle>
+                    </DialogHeader>
+
+                    <p className="text-sm leading-relaxed whitespace-pre-line text-muted-foreground">
+                        {infoModal?.description}
+                    </p>
+
+                    <div className="space-y-3">
+                        {infoModal?.points.map((point) => (
+                            <div
+                                key={point}
+                                className="rounded-md border bg-muted/30 p-3 text-sm leading-relaxed"
+                            >
+                                {point}
+                            </div>
+                        ))}
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
