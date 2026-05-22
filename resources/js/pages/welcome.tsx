@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { useBrowserCloseLogout } from '@/hooks/use-browser-close-logout';
 import { dashboard, login, register } from '@/routes';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 
@@ -49,6 +50,8 @@ export default function Welcome({
 }: {
     canRegister?: boolean;
 }) {
+    useBrowserCloseLogout();
+
     const { auth, flash } = usePage().props as any;
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',

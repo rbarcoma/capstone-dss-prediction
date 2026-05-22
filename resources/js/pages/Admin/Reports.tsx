@@ -145,7 +145,7 @@ export default function Reports({ reports = [] }: { reports: Report[] }) {
                                             <td className="px-3 py-1">{report.title}</td>
                                             <td className="px-3 py-1">{report.type}</td>
                                             <td className="px-3 py-1">
-                                                {report.user?.name ?? 'Admin'}
+                                                {report.user?.name ?? 'System'}
                                             </td>
                                             <td className="px-3 py-1">
                                                 {new Date(report.created_at).toLocaleString()}

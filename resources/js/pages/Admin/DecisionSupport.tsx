@@ -34,7 +34,7 @@ export default function DecisionSupport({
     latestDss?: DssResult;
     history: DssResult[];
 }) {
-    const { auth, flash } = usePage().props as any;
+    const { flash } = usePage().props as any;
 
     const [search, setSearch] = useState('');
     const [monthFilter, setMonthFilter] = useState('all');
@@ -80,7 +80,7 @@ export default function DecisionSupport({
                 : '';
             const demand = item.demand_status?.toLowerCase() ?? '';
             const readiness = item.readiness_level?.toLowerCase() ?? '';
-            const generatedBy = item.user?.name?.toLowerCase() ?? auth?.user?.name?.toLowerCase() ?? '';
+            const generatedBy = item.user?.name?.toLowerCase() ?? 'system';
             const generated = new Date(item.updated_at ?? item.created_at).toLocaleString().toLowerCase();
 
             const matchesSearch =
@@ -240,7 +240,7 @@ export default function DecisionSupport({
                                                 {item.readiness_level}
                                             </td>
                                             <td className="px-3 py-2">
-                                                {item.user?.name ?? auth?.user?.name ?? 'Admin'}
+                                                {item.user?.name ?? 'System'}
                                             </td>
                                             <td className="px-3 py-2">
                                                 {new Date(item.updated_at ?? item.created_at).toLocaleString()}

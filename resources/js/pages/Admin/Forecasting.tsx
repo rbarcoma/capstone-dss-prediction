@@ -131,7 +131,7 @@ export default function Forecasting({
             const period = `${item.year}-${String(item.month).padStart(2, '0')}`;
             const monthName = monthNames[item.month - 1]?.toLowerCase() ?? '';
             const model = item.model_type?.toLowerCase() ?? '';
-            const predictedBy = item.user?.name?.toLowerCase() ?? 'admin';
+            const predictedBy = item.user?.name?.toLowerCase() ?? 'system';
             const predictedAt = formatPredictionDate(
                 item.predicted_at ?? item.created_at,
             ).toLowerCase();
@@ -352,7 +352,7 @@ export default function Forecasting({
                                                 {item.model_type}
                                             </td>
                                             <td className="px-3 py-3">
-                                                {item.user?.name ?? 'Admin'}
+                                                {item.user?.name ?? 'System'}
                                             </td>
                                             <td className="px-3 py-3">
                                                 {formatPredictionDate(item.predicted_at ?? item.created_at)}

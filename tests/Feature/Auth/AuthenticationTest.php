@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Laravel\Fortify\Features;
 
@@ -20,6 +21,23 @@ test('users can authenticate using the login screen', function () {
 
     $this->assertAuthenticated();
     $response->assertRedirect(route('dashboard', absolute: false));
+});
+
+test('login sessions expire when the browser is closed', function () {
+    expect(config('session.expire_on_close'))->toBeTrue();
+});
+
+test('remember me cookies are not created during login', function () {
+    $user = User::factory()->create();
+
+    $response = $this->post(route('login.store'), [
+        'email' => $user->email,
+        'password' => 'password',
+        'remember' => true,
+    ]);
+
+    $this->assertAuthenticated();
+    $response->assertCookieMissing(Auth::guard('web')->getRecallerName());
 });
 
 test('users with two factor enabled are redirected to two factor challenge', function () {

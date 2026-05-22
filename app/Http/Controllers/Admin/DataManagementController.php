@@ -7,6 +7,7 @@ use App\Models\ClimateRecord;
 use App\Models\ConsumptionRecord;
 use App\Support\AuditLogger;
 use App\Support\EnergyPreprocessor;
+use App\Support\MlWorkflow;
 use App\Models\Dataset;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -115,14 +116,19 @@ class DataManagementController extends Controller
                 $processedCount . ' processed records generated after dataset upload.'
             );
 
+            $workflow = app(MlWorkflow::class)->runAfterDatasetUpload($request->user()?->id);
+            $workflowMessage = $workflow['predicted']
+                ? ' Model retrained, next-month prediction, DSS result, and report generated automatically.'
+                : ' Model retraining was skipped: ' . $workflow['message'];
+
             return back()->with(
                 'success',
-                "{$rawCount} daily records uploaded and aggregated into {$monthlyCount} monthly records. {$processedCount} processed records generated automatically."
+                "{$rawCount} daily records uploaded and aggregated into {$monthlyCount} monthly records. {$processedCount} processed records generated automatically.{$workflowMessage}"
             );
         } catch (RuntimeException $exception) {
             return back()->with(
                 'success',
-                "{$rawCount} daily records uploaded and aggregated into {$monthlyCount} monthly records. Preprocessing was not run: {$exception->getMessage()}"
+                "{$rawCount} daily records uploaded and aggregated into {$monthlyCount} monthly records. Automated workflow was not completed: {$exception->getMessage()}"
             );
         }
     }
