@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\ForecastResult;
 use App\Models\ProcessedRecord;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Process;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class AnalyticsController extends Controller
@@ -23,6 +26,24 @@ class AnalyticsController extends Controller
         }
 
         $records = $query->orderBy('year')->orderBy('month')->get();
+        $actualRecords = ProcessedRecord::query()
+            ->orderBy('year')
+            ->orderBy('month')
+            ->get()
+            ->keyBy(fn ($record) => $record->year.'-'.str_pad((string) $record->month, 2, '0', STR_PAD_LEFT));
+        $forecastRecords = ForecastResult::query()
+            ->orderBy('year')
+            ->orderBy('month')
+            ->get()
+            ->keyBy(fn ($forecast) => $forecast->year.'-'.str_pad((string) $forecast->month, 2, '0', STR_PAD_LEFT));
+        $historicalPredictions = $this->historicalPredictions();
+        $comparisonPeriods = $actualRecords
+            ->keys()
+            ->merge($forecastRecords->keys())
+            ->merge($historicalPredictions->keys())
+            ->unique()
+            ->sort()
+            ->values();
         $all = ProcessedRecord::query();
 
         $highestConsumptionRecord = ProcessedRecord::query()
@@ -36,6 +57,38 @@ class AnalyticsController extends Controller
                 'label' => $record->year.'-'.str_pad((string) $record->month, 2, '0', STR_PAD_LEFT),
                 'value' => (float) $record->consumption_kwh,
             ])->values(),
+            'actualPredictedTrend' => $comparisonPeriods->map(function ($period) use ($actualRecords, $forecastRecords, $historicalPredictions) {
+                $actual = $actualRecords->get($period);
+                $forecast = $forecastRecords->get($period);
+                $historicalPrediction = $historicalPredictions->get($period);
+                $actualValue = $actual ? (float) $actual->consumption_kwh : null;
+                $predictedValue = $forecast
+                    ? (float) $forecast->predicted_consumption_kwh
+                    : ($historicalPrediction ? (float) $historicalPrediction['predicted'] : null);
+                $accuracy = null;
+
+                if ($actualValue !== null && $actualValue > 0 && $predictedValue !== null) {
+                    $accuracy = max(0, 100 - (abs($actualValue - $predictedValue) / $actualValue * 100));
+                }
+
+                return [
+                    'period' => $period,
+                    'label' => $period,
+                    'year' => (int) substr($period, 0, 4),
+                    'month' => (int) substr($period, 5, 2),
+                    'actual' => $actualValue,
+                    'predicted' => $predictedValue,
+                    'accuracy' => $accuracy !== null ? round($accuracy, 2) : null,
+                ];
+            })->values(),
+            'filterOptions' => [
+                'years' => $comparisonPeriods
+                    ->map(fn ($period) => (int) substr($period, 0, 4))
+                    ->unique()
+                    ->sort()
+                    ->values(),
+                'months' => range(1, 12),
+            ],
             'yearlyComparison' => ProcessedRecord::query()
                 ->select('year', DB::raw('AVG(consumption_kwh) as value'))
                 ->groupBy('year')
@@ -60,5 +113,42 @@ class AnalyticsController extends Controller
                 'average_solar_irradiance' => round((float) ProcessedRecord::avg('solar_irradiance'), 2),
             ],
         ]);
+    }
+
+    private function historicalPredictions()
+    {
+        if (! Storage::exists('ml/processed_dataset.csv') || ! Storage::exists('ml/model_state.json')) {
+            return collect();
+        }
+
+        $state = json_decode(Storage::get('ml/model_state.json'), true) ?: [];
+        $modelPath = $state['model_path'] ?? null;
+
+        if (! $modelPath || ! Storage::exists($modelPath)) {
+            return collect();
+        }
+
+        $python = file_exists(base_path('venv314/Scripts/python.exe'))
+            ? base_path('venv314/Scripts/python.exe')
+            : 'python';
+
+        $result = Process::path(base_path('Python'))->run([
+            $python,
+            'predict_history.py',
+            Storage::path('ml/processed_dataset.csv'),
+            Storage::path($modelPath),
+        ]);
+
+        if ($result->failed()) {
+            return collect();
+        }
+
+        $predictions = json_decode(trim($result->output()), true);
+
+        if (! is_array($predictions)) {
+            return collect();
+        }
+
+        return collect($predictions)->keyBy('period');
     }
 }

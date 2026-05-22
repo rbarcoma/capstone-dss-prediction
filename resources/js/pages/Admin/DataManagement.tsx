@@ -73,7 +73,7 @@ export default function DataManagement({
             forceFormData: true,
 
             onProgress: (progress) => {
-                toast.loading(`Uploading dataset... ${progress.percentage ?? 0}%`, {
+                toast.loading(`Uploading dataset... ${progress?.percentage ?? 0}%`, {
                     id: toastId,
                     description: 'Please wait while your dataset is being uploaded.',
                 });
