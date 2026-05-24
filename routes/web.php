@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\ForecastingController;
 use App\Http\Controllers\Admin\PreprocessingController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\UserManagementController;
+use App\Http\Controllers\Auth\PasswordResetCodeController;
 use App\Http\Controllers\User\ViewerController;
 use App\Http\Controllers\Admin\AuditTrailController;
 use Illuminate\Http\Request;
@@ -39,6 +40,15 @@ Route::post('/contact', function (Request $request) {
 
     return back()->with('success', 'Message sent successfully.');
 })->name('contact.send');
+
+Route::middleware('guest')->group(function () {
+    Route::get('/forgot-password', [PasswordResetCodeController::class, 'request'])->name('password.request');
+    Route::post('/forgot-password', [PasswordResetCodeController::class, 'sendCode'])->name('password.email');
+    Route::get('/reset-password/code', [PasswordResetCodeController::class, 'codeForm'])->name('password.code');
+    Route::post('/reset-password/code', [PasswordResetCodeController::class, 'verifyCode'])->name('password.code.verify');
+    Route::get('/reset-password', [PasswordResetCodeController::class, 'showResetForm'])->name('password.reset');
+    Route::post('/reset-password', [PasswordResetCodeController::class, 'reset'])->name('password.update');
+});
 
 // user routes
 Route::middleware(['auth'])->group(function () {

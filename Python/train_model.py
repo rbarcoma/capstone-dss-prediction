@@ -131,7 +131,6 @@ def standardize(train_rows):
 
 
 
-
 def matrix_for(rows, means, stds):
     matrix = []
     for row in rows:

@@ -332,6 +332,10 @@ export default function DataManagement({
                                 Daily rows are automatically aggregated into monthly records for preprocessing and forecasting.
                             </p>
 
+                            <p className="text-xs text-muted-foreground">
+                                When replacing a file with the same name, its existing dataset entry is updated instead of duplicated.
+                            </p>
+
                             <div className="flex justify-end gap-2 pt-3">
                                 <Button
                                     type="button"

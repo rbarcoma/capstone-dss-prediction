@@ -46,20 +46,34 @@ class DataManagementController extends Controller
             'replace_existing' => ['nullable', 'boolean'],
         ]);
 
+        $replaceExisting = $request->boolean('replace_existing');
+        $originalName = $request->file('dataset')->getClientOriginalName();
         $path = $request->file('dataset')->store('datasets');
-        $dataset = Dataset::create([
-            'user_id' => $request->user()->id,
-            'type' => 'combined',
-            'original_name' => $request->file('dataset')->getClientOriginalName(),
-            'path' => $path,
-            'status' => 'validating',
-        ]);
-
         [$headers, $rows] = $this->readCsv(Storage::path($path));
         $missing = array_values(array_diff($this->required, $headers));
+        $existingDataset = $replaceExisting
+            ? Dataset::query()
+                ->where('type', 'combined')
+                ->where('original_name', $originalName)
+                ->latest()
+                ->first()
+            : null;
 
         if ($missing !== []) {
-            $dataset->update([
+            if ($existingDataset) {
+                Storage::delete($path);
+
+                return back()->with(
+                    'error',
+                    'Replacement was not saved. The uploaded dataset is invalid. Missing: '.implode(', ', $missing)
+                );
+            }
+
+            $dataset = Dataset::create([
+                'user_id' => $request->user()->id,
+                'type' => 'combined',
+                'original_name' => $originalName,
+                'path' => $path,
                 'status' => 'invalid',
                 'validation_errors' => ['Missing columns: '.implode(', ', $missing)],
             ]);
@@ -67,7 +81,43 @@ class DataManagementController extends Controller
             return back()->with('error', 'Dataset is invalid. Missing: '.implode(', ', $missing));
         }
 
-        if ($request->boolean('replace_existing')) {
+        if ($existingDataset) {
+            $oldPath = $existingDataset->path;
+            $dataset = $existingDataset;
+
+            $dataset->forceFill([
+                'user_id' => $request->user()->id,
+                'path' => $path,
+                'status' => 'validating',
+                'validation_errors' => null,
+                'record_count' => 0,
+                'created_at' => now(),
+            ])->save();
+
+            if ($oldPath !== $path) {
+                Storage::delete($oldPath);
+            }
+
+            Dataset::query()
+                ->where('type', 'combined')
+                ->where('original_name', $originalName)
+                ->where('id', '!=', $dataset->id)
+                ->get()
+                ->each(function (Dataset $duplicate) {
+                    Storage::delete($duplicate->path);
+                    $duplicate->delete();
+                });
+        } else {
+            $dataset = Dataset::create([
+                'user_id' => $request->user()->id,
+                'type' => 'combined',
+                'original_name' => $originalName,
+                'path' => $path,
+                'status' => 'validating',
+            ]);
+        }
+
+        if ($replaceExisting) {
             ConsumptionRecord::truncate();
             ClimateRecord::truncate();
         }
@@ -103,8 +153,8 @@ class DataManagementController extends Controller
 
         AuditLogger::log(
             'Data Management',
-            'Upload Dataset',
-            'Uploaded combined electricity and climate dataset CSV with ' . $rawCount . ' raw records aggregated into ' . $monthlyCount . ' monthly records.'
+            $existingDataset ? 'Replace Dataset' : 'Upload Dataset',
+            ($existingDataset ? 'Replaced' : 'Uploaded') . ' combined electricity and climate dataset CSV with ' . $rawCount . ' raw records aggregated into ' . $monthlyCount . ' monthly records.'
         );
 
         try {
@@ -123,12 +173,12 @@ class DataManagementController extends Controller
 
             return back()->with(
                 'success',
-                "{$rawCount} daily records uploaded and aggregated into {$monthlyCount} monthly records. {$processedCount} processed records generated automatically.{$workflowMessage}"
+                ($existingDataset ? 'Existing dataset replaced. ' : '') . "{$rawCount} daily records uploaded and aggregated into {$monthlyCount} monthly records. {$processedCount} processed records generated automatically.{$workflowMessage}"
             );
         } catch (RuntimeException $exception) {
             return back()->with(
                 'success',
-                "{$rawCount} daily records uploaded and aggregated into {$monthlyCount} monthly records. Automated workflow was not completed: {$exception->getMessage()}"
+                ($existingDataset ? 'Existing dataset replaced. ' : '') . "{$rawCount} daily records uploaded and aggregated into {$monthlyCount} monthly records. Automated workflow was not completed: {$exception->getMessage()}"
             );
         }
     }

@@ -42,7 +42,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
 
                             <p className="mt-7 max-w-lg text-lg leading-8 text-slate-600">
                                 Enter your registered email and the system will
-                                send a secure reset link for your DSS Energy
+                                send a secure 6-digit reset code for your DSS Energy
                                 account.
                             </p>
                         </div>
@@ -59,7 +59,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
                                     Forgot password
                                 </h2>
                                 <p className="mt-2 text-sm text-slate-500">
-                                    We will email a password reset link if the
+                                    We will email a 6-digit reset code if the
                                     account exists in the system.
                                 </p>
                             </div>
@@ -99,7 +99,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
                                             {processing && (
                                                 <LoaderCircle className="h-4 w-4 animate-spin" />
                                             )}
-                                            Email password reset link
+                                            Email reset code
                                         </Button>
                                     </>
                                 )}

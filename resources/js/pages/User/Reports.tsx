@@ -11,6 +11,7 @@ export default function Reports({ reports = [] }: { reports: Report[] }) {
     const [typeFilter, setTypeFilter] = useState('all');
     const [itemsPerPage, setItemsPerPage] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
+    const latestReportId = reports[0]?.id;
 
     const filteredReports = useMemo(() => {
         return reports.filter((report) => {
@@ -111,8 +112,14 @@ export default function Reports({ reports = [] }: { reports: Report[] }) {
 
                         <tbody>
                             {paginatedReports.length > 0 ? (
-                                paginatedReports.map((report) => (
-                                    <tr key={report.id} className="border-b">
+                                paginatedReports.map((report) => {
+                                    const isLatest = report.id === latestReportId;
+
+                                    return (
+                                    <tr
+                                        key={report.id}
+                                        className={`border-b ${isLatest ? 'bg-primary/5 font-bold' : ''}`}
+                                    >
                                         <td className="px-3 py-2">{report.title}</td>
                                         <td className="px-3 py-2">{report.type}</td>
                                         <td className="px-3 py-2">
@@ -126,7 +133,8 @@ export default function Reports({ reports = [] }: { reports: Report[] }) {
                                             </Button>
                                         </td>
                                     </tr>
-                                ))
+                                    );
+                                })
                             ) : (
                                 <tr>
                                     <td

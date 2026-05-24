@@ -327,7 +327,6 @@ export default function Analytics({
     const hasPredictedForSelection = filteredActualPredictedTrend.some(
         (item: any) => item.predicted !== null,
     );
-
     const analyticsInfo = {
         averageConsumption: {
             title: 'Average Consumption',
