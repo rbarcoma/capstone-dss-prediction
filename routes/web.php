@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AnalyticsController;
+use App\Http\Controllers\Admin\AuditTrailController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\DataManagementController;
 use App\Http\Controllers\Admin\DecisionSupportController;
@@ -9,10 +10,8 @@ use App\Http\Controllers\Admin\PreprocessingController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Auth\PasswordResetCodeController;
+use App\Http\Controllers\ContactController;
 use App\Http\Controllers\User\ViewerController;
-use App\Http\Controllers\Admin\AuditTrailController;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -21,25 +20,9 @@ Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
 
-Route::post('/contact', function (Request $request) {
-    $data = $request->validate([
-        'name' => ['required', 'string', 'max:255'],
-        'email' => ['required', 'email', 'max:255'],
-        'message' => ['required', 'string', 'max:5000'],
-    ]);
-
-    Mail::raw(
-        "Name: {$data['name']}\nEmail: {$data['email']}\n\nMessage:\n{$data['message']}",
-        function ($message) use ($data) {
-            $message
-                ->to('dsspredictionqc@gmail.com')
-                ->replyTo($data['email'], $data['name'])
-                ->subject('New DSS Energy Contact Message');
-        },
-    );
-
-    return back()->with('success', 'Message sent successfully.');
-})->name('contact.send');
+Route::post('/contact', ContactController::class)
+    ->middleware('throttle:6,1')
+    ->name('contact.send');
 
 Route::middleware('guest')->group(function () {
     Route::get('/forgot-password', [PasswordResetCodeController::class, 'request'])->name('password.request');

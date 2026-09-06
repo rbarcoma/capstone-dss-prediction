@@ -1,4 +1,4 @@
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, Link } from '@inertiajs/react';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
 import TextLink from '@/components/text-link';
@@ -6,9 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
-import { register } from '@/routes';
+import { home, register } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
+import { ChartNoAxesCombined } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
 
 type Props = {
     status?: string;
@@ -21,6 +24,7 @@ export default function Login({
     canResetPassword,
     canRegister,
 }: Props) {
+    const currentYear = new Date().getFullYear();
     return (
         <>
             <Head title="Log in" />
@@ -29,7 +33,11 @@ export default function Login({
                 <div className="mx-auto grid min-h-screen max-w-[1280px] grid-cols-1 bg-white lg:grid-cols-[1.05fr_1fr]">
                     {/* LEFT SIDE */}
                     <section className="relative hidden px-20 py-16 lg:flex lg:flex-col">
-                        <div className="flex items-center gap-3">
+                        <Link
+                            href={home()}
+                            aria-label="Go to the DSS Energy landing page"
+                            className="flex w-fit items-center gap-3 rounded-xl transition-opacity outline-none hover:opacity-80 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-4"
+                        >
                             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500 text-sm font-bold text-white">
                                 DE
                             </div>
@@ -42,7 +50,7 @@ export default function Login({
                                     Renewable Energy Decision Support
                                 </p>
                             </div>
-                        </div>
+                        </Link>
 
                         <div className="flex flex-1 flex-col justify-center">
                             <p className="mb-5 text-sm font-semibold tracking-[0.35em] text-emerald-600">
@@ -61,7 +69,7 @@ export default function Login({
                         </div>
 
                         <div className="border-t border-slate-200 pt-7 text-sm text-slate-500">
-                            © 2026 DSS Energy
+                            © {currentYear} DSS Energy.
                         </div>
                     </section>
 

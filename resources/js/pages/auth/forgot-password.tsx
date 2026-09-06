@@ -9,6 +9,7 @@ import { login } from '@/routes';
 import { email } from '@/routes/password';
 
 export default function ForgotPassword({ status }: { status?: string }) {
+    const currentYear = new Date().getFullYear();
     return (
         <>
             <Head title="Forgot password" />
@@ -48,7 +49,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
                         </div>
 
                         <div className="border-t border-slate-200 pt-7 text-sm text-slate-500">
-                            &copy; 2026 DSS Energy
+                            © {currentYear} DSS Energy
                         </div>
                     </section>
 

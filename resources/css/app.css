@@ -12,6 +12,40 @@
         'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
+    --font-landing:
+        'Manrope', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+        'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+
+    --color-energy-navy-950: #071827;
+    --color-energy-navy-900: #0b2135;
+    --color-energy-navy-800: #12344f;
+    --color-energy-navy-700: #1a4968;
+    --color-energy-green-950: #082f22;
+    --color-energy-green-900: #0a4932;
+    --color-energy-green-800: #0f6041;
+    --color-energy-green-700: #137a53;
+    --color-energy-green-600: #16885b;
+    --color-energy-green-500: #1b9a68;
+    --color-energy-green-400: #31b77f;
+    --color-energy-green-300: #75d6aa;
+    --color-energy-green-200: #b8ead2;
+    --color-energy-green-100: #dff5e9;
+    --color-energy-green-50: #f0faf5;
+    --color-energy-mist: #f3f7f6;
+
+    --spacing-landing-gutter: clamp(1rem, 4vw, 3.5rem);
+    --spacing-landing-section: clamp(4.5rem, 8vw, 7.5rem);
+
+    --radius-landing-card: 1.25rem;
+
+    --shadow-landing-card:
+        0 18px 50px -32px rgb(7 24 39 / 0.34), 0 1px 2px rgb(7 24 39 / 0.04);
+    --shadow-landing-card-hover:
+        0 28px 65px -34px rgb(7 24 39 / 0.38), 0 4px 12px rgb(7 24 39 / 0.05);
+
+    --text-landing-display: clamp(2.5rem, 5.2vw, 4.75rem);
+    --text-landing-display--line-height: 1.04;
+    --text-landing-display--letter-spacing: -0.055em;
 
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
@@ -141,12 +175,64 @@
         @apply bg-background text-foreground;
     }
 
-    html{
+    html {
         scroll-behavior: smooth;
+        scroll-padding-top: 4.75rem;
     }
 }
 
 @layer components {
+    .landing-page {
+        color-scheme: light;
+        --landing-focus-ring: var(--color-energy-green-500);
+    }
+
+    .landing-page section[id] {
+        scroll-margin-top: 4.75rem;
+    }
+
+    .landing-page ::selection {
+        background: var(--color-energy-green-200);
+        color: var(--color-energy-navy-950);
+    }
+
+    .landing-eyebrow {
+        @apply text-xs font-extrabold tracking-[0.16em] text-energy-green-700 uppercase;
+    }
+
+    .landing-grid-pattern {
+        background-image:
+            linear-gradient(rgb(255 255 255 / 0.08) 1px, transparent 1px),
+            linear-gradient(90deg, rgb(255 255 255 / 0.08) 1px, transparent 1px);
+        background-size: 48px 48px;
+        mask-image: linear-gradient(to bottom, black, transparent 92%);
+    }
+
+    .landing-reveal {
+        opacity: 0;
+        transform: translate3d(0, 18px, 0);
+        transition:
+            opacity 560ms cubic-bezier(0.22, 1, 0.36, 1),
+            transform 560ms cubic-bezier(0.22, 1, 0.36, 1);
+        will-change: opacity, transform;
+    }
+
+    .landing-reveal[data-visible='true'] {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+        will-change: auto;
+    }
+
+    .landing-mobile-sheet > button:last-child {
+        display: flex;
+        width: 2.75rem;
+        height: 2.75rem;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.75rem;
+        opacity: 1;
+    }
+
     .admin-shell {
         @apply min-h-screen bg-[#f5f6f8] text-slate-950;
     }
@@ -183,7 +269,10 @@
         @apply text-white;
     }
 
-    .admin-shell [data-slot='button']:not([data-variant='outline']):not([data-variant='ghost']) {
+    .admin-shell
+        [data-slot='button']:not([data-variant='outline']):not(
+            [data-variant='ghost']
+        ) {
         @apply rounded-2xl bg-emerald-500 font-semibold text-white shadow-sm shadow-emerald-500/20 hover:bg-emerald-600;
     }
 
@@ -272,5 +361,26 @@
 
     .dark .admin-shell .text-red-600 {
         @apply text-red-300;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    .landing-page *,
+    .landing-page *::before,
+    .landing-page *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    .landing-reveal {
+        opacity: 1;
+        transform: none;
+        will-change: auto;
     }
 }

@@ -43,7 +43,7 @@ class PasswordResetCodeController extends Controller
                 [
                     'token' => Hash::make($code),
                     'created_at' => now(),
-                ],
+                ],              
             );
 
             Mail::html($this->emailBody($code), function ($message) use ($email) {
